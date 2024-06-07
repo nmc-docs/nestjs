@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkreactjs=self.webpackChunkreactjs||[]).push([[253],{4724:e=>{e.exports=JSON.parse('{"title":"T\u1ed5ng quan NestJS","slug":"/category/t\u1ed5ng-quan-nestjs","permalink":"/nestjs/category/t\u1ed5ng-quan-nestjs","navigation":{"next":{"title":"Kh\u1edfi t\u1ea1o NestJS","permalink":"/nestjs/"}}}')}}]);
