@@ -209,7 +209,7 @@ export class CustomersController {
 - Trong 4 cấp độ trên, 3 cấp độ đầu sẽ validate dữ liệu cho cả BODY + QUERY nếu chúng được định nghĩa bằng class và sử dụng các decorator của thư viện class validator.
 - Ví dụ cho 4 cấp độ:
 
-**Cấp độ Global**:
+### Cấp độ Global
 
 ```ts
 import { NestFactory } from "@nestjs/core";
@@ -224,7 +224,22 @@ async function bootstrap() {
 bootstrap();
 ```
 
-**Cấp độ Controller**:
+- Hoặc cấu hình global trong AppModule:
+
+```ts
+@Module({
+  controllers: [],
+  providers: [
+    {
+      provide: APP_PIPE,
+      useClass: RequestValidationPipe,
+    },
+  ],
+})
+export class AppModule {}
+```
+
+### Cấp độ Controller
 
 ```ts
 import {
@@ -257,7 +272,7 @@ export class CustomersController {
 }
 ```
 
-**Cấp độ method**:
+### Cấp độ method
 
 ```ts
 import {
@@ -293,7 +308,7 @@ export class CustomersController {
 }
 ```
 
-**Cấp độ Request object**:
+### Cấp độ request object
 
 ```ts
 import { Body, Controller, Post, Query, ValidationPipe } from "@nestjs/common";

@@ -274,6 +274,21 @@ async function bootstrap() {
 bootstrap();
 ```
 
+- Hoặc cấu hình global trong AppModule:
+
+```ts
+@Module({
+  controllers: [],
+  providers: [
+    {
+      provide: APP_FILTER,
+      useClass: AllExceptionsFilter,
+    },
+  ],
+})
+export class AppModule {}
+```
+
 ### Cấp độ controller
 
 ```ts
@@ -299,7 +314,7 @@ export class CustomersController {
 }
 ```
 
-## Cấp độ method
+### Cấp độ method
 
 ```ts
 import { Body, Controller, Get, Post, UseFilters } from "@nestjs/common";

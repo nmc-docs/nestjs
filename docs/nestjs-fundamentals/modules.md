@@ -19,6 +19,13 @@ sidebar_position: 2
 
 :::
 
+:::note
+
+- Một module sẽ không resolve những provider nằm ngoài phạm vi của nó.
+- Ví dụ như class ControllerA gán với ModuleA mà ControllerA sử dụng các provider nào đó thì provider này hoặc là nó phải được đưa vào Providers của ModuleA, hoặc nếu nó thuộc module khác thì phải import module chứa nó vào ModuleA.
+
+:::
+
 ## Lệnh CLI để tạo module
 
 - Để tạo 1 folder module trong NestJS, ta sử dụng lệnh:
@@ -102,6 +109,13 @@ export class UserService {
   }
 }
 ```
+
+:::note
+
+- Lưu ý rằng, khi ta import một module thì chỉ sử dụng được các provider mà được export ra ở module đó.
+- Chỉ export ra được những provider mà nằm trong mảng providers của module.
+
+:::
 
 ## Dynamic module
 

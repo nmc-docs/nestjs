@@ -53,6 +53,16 @@ export class CustomersController {
 
 :::
 
+- Sau khi tạo xong controller, ta import nó vào module:
+
+```ts
+@Module({
+  controllers: [CustomersController],
+  providers: [CustomersService],
+})
+export class CustomersModule {}
+```
+
 ## Lệnh CLI để tạo file controller
 
 ```bash
