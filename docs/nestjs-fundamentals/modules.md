@@ -12,9 +12,9 @@ sidebar_position: 2
 - Mỗi ứng dụng NestJS bao gồm ít nhất một module - gọi là `AppModule`, đây là module gốc của ứng dụng. Tuy nhiên, khi ứng dụng của bạn bắt đầu lớn lên, bạn sẽ muốn chia nhỏ nó thành các module nhỏ hơn, có thể tái sử dụng ở nhiều nơi.
 - Một module trong NestJS thường bao gồm:
 
-1. **Providers** : Các service, repository, factories, helpers, v.v. được chia sẻ giữa các component trong cùng một module.
+1. **Providers** : Các service, repository, factories, helpers, v.v. là provider được chia sẻ giữa các component trong cùng một module.
 2. **Controllers** : Các controller xử lý các request HTTP.
-3. **Imports** : Các modules khác cần được nhập để sử dụng các providers và controllers.
+3. **Imports** : Các modules khác cần được import để sử dụng các providers và controllers.
 4. **Exports** : Các providers và controllers được chia sẻ với các modules khác.
 
 :::
@@ -22,7 +22,7 @@ sidebar_position: 2
 :::note
 
 - Một module sẽ không resolve những provider nằm ngoài phạm vi của nó.
-- Ví dụ như class ControllerA gán với ModuleA mà ControllerA sử dụng các provider nào đó thì provider này hoặc là nó phải được đưa vào Providers của ModuleA, hoặc nếu nó thuộc module khác thì phải import module chứa nó vào ModuleA.
+- Ví dụ như class ControllerA gán với ModuleA mà ControllerA sử dụng các provider nào đó thì provider này hoặc là nó phải được đưa vào mảng các providers của ModuleA, hoặc nếu nó thuộc module khác thì phải import module chứa nó vào ModuleA.
 
 :::
 
@@ -324,3 +324,28 @@ export class AuthService {
   }
 }
 ```
+
+## Global module
+
+- Như đã nói bên trên, để sử dụng một service, hay một provider của một module (gọi là ModuleA), ta phải import ModuleA đó vào. Nhưng nếu service, hay provider đó được sử dụng ở rất nhiều nơi, thì mỗi lần dùng ta lại phải import ModuleA đó vào, điều này có thể gây bất tiện. Để giải quyết điều này, hãy đánh dấu ModuleA bởi decorator **@Global()**. Sau đó, ta có thể sử dụng trực tiếp các service, provider mà không cần phải import ModuleA.
+- Ví dụ:
+
+```ts
+import { Module, Global } from "@nestjs/common";
+import { CatsController } from "./cats.controller";
+import { CatsService } from "./cats.service";
+
+@Global()
+@Module({
+  controllers: [CatsController],
+  providers: [CatsService],
+  exports: [CatsService],
+})
+export class CatsModule {}
+```
+
+:::note
+
+- Ta không nên quá lạm dụng decorator **@Global()** này.
+
+:::

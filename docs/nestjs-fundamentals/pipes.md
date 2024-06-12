@@ -20,6 +20,12 @@ sidebar_position: 4
 
 :::
 
+:::note
+
+- Khi ta sử dụng pipe sẵn có hoặc 1 custom pipe do ta tạo ra, mặc dù chúng là 1 service có thể được quản lý bởi hệ thống dependency injection của NestJS (vì có decorator **@Injectable()**), nhưng ta không cần phải cho nó vào mảng provider trong file module, nó sẽ tự động được resolve bởi module.
+
+:::
+
 ## Built-in pipes
 
 - Dưới đây là một số pipe được NestJS dựng sẵn:

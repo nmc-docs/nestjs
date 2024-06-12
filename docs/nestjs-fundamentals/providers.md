@@ -65,7 +65,12 @@ class DatabaseService {
 
 :::note
 
-- Trong ví dụ trên, ta thấy UserService phụ thuộc vào AuthService, AuthService sau đó phụ thuộc vào DatabaseService.
+- Trong ví dụ trên, ta thấy UserService phụ thuộc vào AuthService, AuthService sau đó phụ thuộc vào DatabaseService, do đó khi khởi tạo sẽ như sau:
+
+```ts
+new UserService(new AuthService(new DatabaseService()));
+```
+
 - Vấn đề là khi 1 service có quá nhiều sự phụ thuộc vào các service khác, việc quản lý cũng như tổ chức code gặp khó khăn, vì vậy kỹ thuật Dependency Injection là giải pháp.
 
 :::
@@ -127,6 +132,12 @@ import { CatsService } from "./cats/cats.service";
 })
 export class CatsModule {}
 ```
+
+:::note
+
+- Khi ta đánh dấu một class bằng decorator `@Injectable()`, NestJS biết rằng class này cần được xử lý bởi container dependency injection. Điều này cho phép ta inject class này vào class khác làm làm đối tượng phụ thuộc mà không cần khởi tạo chúng.
+
+:::
 
 ## Các loại Provider thường dùng trong NestJS
 
