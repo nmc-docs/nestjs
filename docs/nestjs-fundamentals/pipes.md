@@ -395,6 +395,12 @@ export class ValidationPipe implements PipeTransform<any> {
 }
 ```
 
+:::note
+
+- Giống như controller, ta có thể **inject dependencies** vào pipe thông qua **constructor()**
+
+:::
+
 ## Custom lại pipe sẵn có
 
 - Để tùy chỉnh lại pipe sẵn có do NestJS cung cấp, ta chỉ cần extends lại nó và custom lại thuộc tính, hay phương thức của nó.

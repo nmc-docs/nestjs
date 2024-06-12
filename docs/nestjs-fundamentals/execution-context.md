@@ -178,3 +178,35 @@ const roles = this.reflector.getAllAndMerge(Roles, [
   context.getClass(),
 ]); // ["user", "admin"]
 ```
+
+### SetMetadata()
+
+:::info
+
+- Ngoài việc sử dụng **Reflector.createDecorator()** để tạo metadata, ta có thể dùng hàm **SetMetadata()**. Nó cũng có chức năng tương tự.
+
+:::
+
+- Ví dụ: tạo decorator "Roles" nhận vào tham số là 1 mảng các string
+
+```ts
+import { SetMetadata } from "@nestjs/common";
+
+export const Roles = (...roles: string[]) => SetMetadata("roles", roles);
+```
+
+Sử dụng decorator "Roles" ở bên trong controller:
+
+```ts
+@Post()
+@Roles('admin')
+async create(@Body() createCatDto: CreateCatDto) {
+  this.catsService.create(createCatDto);
+}
+```
+
+Cuối cùng, ta có thể lấy giá trị của nó ra trong Guard:
+
+```ts
+const roles = this.reflector.get<string[]>("roles", context.getHandler());
+```

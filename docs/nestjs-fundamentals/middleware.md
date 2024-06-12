@@ -7,9 +7,14 @@ sidebar_position: 8
 :::info
 
 - Middleware là hàm mà sẽ được chạy trước khi vào router handler. Middleware có quyền truy cập vào đối tượng request và response, xử lý chúng.
-- Middleware có hỗ trợ Dependency Injection. Giống như provider hay controller, nó có thể inject các providers, service, dependencies ở trong hàm khởi tạo constructor()
 
 ![1718176640024](image/middleware/1718176640024.png)
+
+:::
+
+:::note
+
+- Middleware có hỗ trợ Dependency Injection. Giống như provider hay controller, nó có thể inject các providers, service, dependencies ở trong hàm khởi tạo constructor()
 
 :::
 

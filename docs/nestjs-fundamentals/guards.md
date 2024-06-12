@@ -15,13 +15,6 @@ Guard trong NestJS là một tính năng quan trọng được sử dụng để
 
 ![1718117311327](image/guards/1718117311327.png)
 
-:::note
-
-- Guard được thực thi sau tất cả các middleware, và trước bất kỳ interceptor hoặc pipe nào.
-- Mặc dù guard được đánh dấu **@Injectable()** nhưng ta không cần phải cho nó vào mảng provider ở module. Nó sẽ tự động được resolve. Nhưng nếu trong guard sử dụng service nào đó thuộc module khác thì ta vẫn phải import module đó vào.
-
-:::
-
 ## Tạo Guard
 
 ```ts
@@ -46,6 +39,13 @@ export class AuthGuard implements CanActivate {
 ```ts
 throw new UnauthorizedException();
 ```
+
+:::
+
+:::note
+
+- Mặc dù guard được đánh dấu **@Injectable()** nhưng ta không cần phải cho nó vào mảng provider ở module. Nó sẽ tự động được resolve. Nhưng nếu trong guard sử dụng service nào đó thuộc module khác thì ta vẫn phải import module đó vào.
+- Giống như controller hay các providers khác, ta có thể **inject dependencies** vào guard thông qua hàm **constructor()**
 
 :::
 
