@@ -85,7 +85,14 @@ new UserService(new AuthService(new DatabaseService()));
 
 ## Định nghĩa Provider
 
-- Trong NestJS, ta có thể đánh dấu một service là một provider thông qua **@Injectable()**, ví dụ:
+:::info
+
+- Trong NestJS, ta có thể đánh dấu một service là một provider thông qua **@Injectable()**
+- Khi ta đánh dấu một class bằng decorator `@Injectable()`, NestJS biết rằng class này cần được xử lý bởi container dependency injection. Điều này cho phép ta inject class này vào class khác làm làm đối tượng phụ thuộc mà không cần khởi tạo chúng.
+
+:::
+
+- Ví dụ:
 
 ```ts
 import { Injectable } from "@nestjs/common";
@@ -132,12 +139,6 @@ import { CatsService } from "./cats/cats.service";
 })
 export class CatsModule {}
 ```
-
-:::note
-
-- Khi ta đánh dấu một class bằng decorator `@Injectable()`, NestJS biết rằng class này cần được xử lý bởi container dependency injection. Điều này cho phép ta inject class này vào class khác làm làm đối tượng phụ thuộc mà không cần khởi tạo chúng.
-
-:::
 
 ## Các loại Provider thường dùng trong NestJS
 
