@@ -22,7 +22,7 @@ sidebar_position: 2
 :::note
 
 - Một module sẽ không resolve những provider nằm ngoài phạm vi của nó.
-- Ví dụ như class ControllerA gán với ModuleA mà ControllerA sử dụng các provider nào đó thì provider này hoặc là nó phải được đưa vào mảng các providers của ModuleA, hoặc nếu nó thuộc module khác thì phải import module chứa nó vào ModuleA.
+- Một module sử dụng controller, service, provider mà các controller, service, provider này sử dụng các thành phần phụ thuộc (tham số truyền vào constructor) thì các thành phần phụ thuộc đó hoặc là phải được truyền vào mảng các providers của module, hoặc nếu nó thuộc module khác thì phải import module khác đó vào module hiện tại (và tất nhiên các thành phần phụ thuộc đó phải được export ra).
 
 :::
 
