@@ -348,3 +348,64 @@ export class PhotoService {
   }
 }
 ```
+
+## So sánh cách tạo provider
+
+- Như ở bên trên giới thiệu, ta có thể dùng **useFactory** để tạo một provider, ví dụ như:
+
+```ts
+@Module({
+  imports: [],
+  controllers: [],
+  providers: [
+    {
+      provide: APP_INTERCEPTOR,
+      useFactory: (reflector: Reflector) => {
+        return new ClassSerializerInterceptor(reflector, {
+          strategy: "excludeAll",
+          excludeExtraneousValues: true,
+        });
+      },
+      inject: [Reflector],
+    },
+  ],
+})
+export class AppModule {}
+```
+
+- Ta cũng có thể tạo riêng provider này ra một file khác:
+
+```ts
+import {
+  ClassSerializerInterceptor,
+  Injectable,
+  NestInterceptor,
+} from "@nestjs/common";
+import { Reflector } from "@nestjs/core";
+
+@Injectable()
+export class CustomClassSerializerInterceptor
+  extends ClassSerializerInterceptor
+  implements NestInterceptor
+{
+  constructor(public reflector: Reflector) {
+    super(reflector, { strategy: "excludeAll", excludeExtraneousValues: true });
+  }
+}
+```
+
+- Và sau đó dùng **useClass**:
+
+```ts
+@Module({
+  imports: [],
+  controllers: [],
+  providers: [
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: CustomClassSerializerInterceptor,
+    },
+  ],
+})
+export class AppModule {}
+```
