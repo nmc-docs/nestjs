@@ -1,5 +1,5 @@
 ---
-sidebar_position: 5
+sidebar_position: 4
 ---
 
 # Upload và validate file
@@ -40,7 +40,7 @@ npm install -D @types/multer
 
 ### File required validator
 
-```ts title="src/common/validators/file-required.validator.ts"
+```ts
 import { FileValidator } from "@nestjs/common";
 
 interface IFileRequiredValidatorOptions {
@@ -70,7 +70,7 @@ export class FileRequiredValidator extends FileValidator<IFileRequiredValidatorO
 
 ### File type validator
 
-```ts title="src/common/validators/file-type.validator.ts"
+```ts
 import { FileValidator } from "@nestjs/common";
 import * as FileType from "file-type-mime";
 
@@ -114,7 +114,7 @@ export class FileTypeValidator extends FileValidator<IFileTypeValidatorOptions> 
 
 ### File size validator
 
-```ts title="src/common/validators/file-size.validator.ts"
+```ts
 import { FileValidator } from "@nestjs/common";
 
 interface IFileSizeValidatorOptions {
@@ -154,7 +154,7 @@ export class FileSizeValidator extends FileValidator<IFileSizeValidatorOptions> 
 
 ### File count validator
 
-```ts title="src/common/validators/file-count.validator.ts"
+```ts
 import { FileValidator } from "@nestjs/common";
 
 interface IFileCountValidatorOptions {
@@ -190,7 +190,7 @@ export class FileCountValidator extends FileValidator<IFileCountValidatorOptions
 
 - Giờ ta sẽ tạo pipe để validate file của từng field trong request bằng các validator ta đã tạo ở trên:
 
-```ts title="src/common/types/pipe.type.ts"
+```ts
 import { FileValidator } from "@nestjs/common";
 import { IFile } from "@nestjs/common/pipes/file/interfaces";
 
@@ -199,7 +199,7 @@ export type TFileValidators = {
 };
 ```
 
-```ts title="src/common/pipes/parse-files-fields.pipe.ts"
+```ts
 import {
   ArgumentMetadata,
   BadRequestException,
@@ -238,7 +238,7 @@ export class ParseFileFieldsPipe<T> implements PipeTransform {
 
 - Tiếp theo, ta sẽ tạo định nghĩa request DTO và tạo decorator:
 
-```ts title="src/modules/customers/dto/create-customer.dto.ts"
+```ts
 import { applyDecorators, UploadedFiles } from "@nestjs/common";
 import { IsEmail, IsNotEmpty, IsString } from "class-validator";
 
@@ -314,7 +314,7 @@ export const CreateCustomerUploadFiles = () => {
 
 ## Sử dụng ở trong controller
 
-```ts title="src/modules/customers/customers.controller.ts"
+```ts
 import { Body, Controller, Post, UseInterceptors } from "@nestjs/common";
 import { FileFieldsInterceptor } from "@nestjs/platform-express";
 

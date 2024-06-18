@@ -248,7 +248,7 @@ export class CustomersController {
 
 - **useFactory** provider trong NestJS là một cách rất mạnh mẽ để cung cấp các provider động. Nó cho phép viết một hàm factory để tạo ra instance của provider, có thể sử dụng các dependencies khác và các tham số cấu hình làm tham số.
 - Provider chính là giá trị được trả về từ hàm factory (có thể là một instance)
-- Hàm factory có thể nhận tham số đầu vào, và chúng **PHẢI LÀ PROVIDER**, và phải được inject vào.
+- Hàm factory có thể nhận tham số đầu vào, và chúng **PHẢI LÀ PROVIDER**, phải được truyền vào mảng property **inject** và quan trọng nó phải được [module resolve](./modules#một-provider-được-resolve-bởi-module-khi-nào).
 
 :::
 

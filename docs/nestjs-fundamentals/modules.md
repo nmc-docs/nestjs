@@ -19,10 +19,13 @@ sidebar_position: 2
 
 :::
 
-:::note
+## Một provider được resolve bởi module khi nào?
+
+:::info
 
 - Một module sẽ không resolve những provider nằm ngoài phạm vi của nó.
-- Một module sử dụng controller, service, provider mà các controller, service, provider này sử dụng các thành phần phụ thuộc (tham số truyền vào constructor) thì các thành phần phụ thuộc đó hoặc là phải được truyền vào mảng các providers của module, hoặc nếu nó thuộc module khác thì phải import module khác đó vào module hiện tại (và tất nhiên các thành phần phụ thuộc đó phải được export ra).
+- Một provider được module resolve nếu nó được truyền vào mảng **providers** khi cấu hình module, hoặc được export từ một module khác và module khác này phải được import vào module hiện tại.
+- Một module sử dụng controller, service, provider mà các controller, service, provider này sử dụng các thành phần phụ thuộc (tham số truyền vào constructor) thì các thành phần phụ thuộc đó cũng **PHẢI ĐƯỢC RESOLVE BỞI MODULE**.
 
 :::
 
