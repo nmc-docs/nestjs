@@ -235,7 +235,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     const exceptionResponse = isInstanceOfHttpException
       ? (exception.getResponse() as object)
-      : { message: exception.message };
+      : { message: exception.message, stack: exception.stack };
 
     const responseBody = {
       ...exceptionResponse,

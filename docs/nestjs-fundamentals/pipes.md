@@ -419,7 +419,6 @@ export class RequestValidationPipe extends ValidationPipe {
   constructor() {
     super({
       whitelist: true,
-      stopAtFirstError: true,
       transform: true,
       transformOptions: { enableImplicitConversion: true },
       exceptionFactory: (errors) => {
@@ -427,9 +426,7 @@ export class RequestValidationPipe extends ValidationPipe {
           errors[0]?.constraints as object
         ).reverse()[0];
         return new BadRequestException({
-          statusCode: HttpStatus.BAD_REQUEST,
           message: firstErrorMessage,
-          error: "Bad Requestssss",
         });
       },
     });
