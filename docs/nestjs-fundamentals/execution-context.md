@@ -17,7 +17,7 @@ sidebar_position: 6
 
 ## ArgumentsHost class
 
-- Trong NestJS, **ArgumentsHost** là một lớp cung cấp các phương thức để truy cập vào các đối số (arguments) của phương thức xử lý (handler) hiện tại. **ArgumentsHost** được sử dụng chủ yếu trong các thành phần như[ exception filters](./exception-filters), guards, và interceptors để trích xuất và xử lý các thông tin liên quan đến yêu cầu (request) hiện tại.
+- Trong NestJS, **ArgumentsHost** là một lớp cung cấp các phương thức để truy cập vào các đối số (arguments) của phương thức xử lý (handler) hiện tại. **ArgumentsHost** được sử dụng chủ yếu trong các thành phần như[ exception filters](./exception-filters#exception-filters-1), [guards](./guards#tạo-guard), và [interceptors ](./interceptors#tạo-interceptors)để trích xuất và xử lý các thông tin liên quan đến yêu cầu (request) hiện tại.
 - Các phương thức chính của **ArgumentsHost**:
 
 | Phương thức                  | Mô tả                                                                                                                      |

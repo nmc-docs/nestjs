@@ -200,7 +200,7 @@ export class CustomersController {
 
 | Option              | Kiểu dữ liệu | Mô tả                                                                                                                                         |
 | ------------------- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| whitelist           | boolean      | Nếu là "true", các thuộc tính không được định nghĩa sẽ bị loại bỏ. Giá trị mặc định là "false"                                                |
+| whitelist           | boolean      | Nếu là "true", các thuộc tính không được đính decorator của class-validator sẽ bị loại bỏ. Giá trị mặc định là "false"                        |
 | errorHttpStatusCode | number       | Response HTTP Status Code. Giá trị mặc định là 400                                                                                            |
 | exceptionFactory    | Function     | Là một hàm nhận tham số là một validation errors và return một exception. Dùng khi ta muốn custom lỗi trả vè cho client khi validate thất bại |
 | stopAtFirstError    | boolean      | Nếu là "true", sẽ dừng lại khi validate thất bại ở thuộc tính đầu tiên. Mặc định là "false"                                                   |
@@ -211,7 +211,7 @@ export class CustomersController {
   - Cấp độ global: Xác thực dữ liệu đầu vào cho tất cả các endpoint trong ứng dụng.
   - Cấp độ controller: Xác thực dữ liệu đầu vào của tất cả các endpoint trong controller.
   - Cấp độ method: Xác thực dữ liệu đầu vào của một endpoint nhất định trong controller.
-  - Cấp độ request object: Xác thực dữ liệu theo request object ở trong 1 method cụ thể trong controller, nếu chỉ định ở body, chỉ validate ở body, tương tự với query.
+  - Cấp độ parameter: Xác thực dữ liệu theo params ở trong 1 method cụ thể trong controller, nếu chỉ định ở body, chỉ validate ở body, tương tự với query.
 - Trong 4 cấp độ trên, 3 cấp độ đầu sẽ validate dữ liệu cho cả BODY + QUERY nếu chúng được định nghĩa bằng class và sử dụng các decorator của thư viện class validator.
 - Ví dụ cho 4 cấp độ:
 
@@ -314,7 +314,7 @@ export class CustomersController {
 }
 ```
 
-### Cấp độ request object
+### Cấp độ parameter
 
 ```ts
 import { Body, Controller, Post, Query, ValidationPipe } from "@nestjs/common";
@@ -397,39 +397,6 @@ export class ValidationPipe implements PipeTransform<any> {
 
 :::note
 
-- Giống như controller, ta có thể **inject dependencies** vào pipe thông qua **constructor()**
+- Giống như controller, ta có thể **inject dependencies** khác vào pipe thông qua **constructor()**
 
 :::
-
-## Custom lại pipe sẵn có
-
-- Để tùy chỉnh lại pipe sẵn có do NestJS cung cấp, ta chỉ cần extends lại nó và custom lại thuộc tính, hay phương thức của nó.
-- Ví dụ sau ta sẽ custom lại ValidationPipe (vì ta muốn custom lại message trả về là 1 string, chứ không phải mảng như bình thường):
-
-```ts
-import {
-  BadRequestException,
-  HttpStatus,
-  Injectable,
-  ValidationPipe,
-} from "@nestjs/common";
-
-@Injectable()
-export class RequestValidationPipe extends ValidationPipe {
-  constructor() {
-    super({
-      whitelist: true,
-      transform: true,
-      transformOptions: { enableImplicitConversion: true },
-      exceptionFactory: (errors) => {
-        const firstErrorMessage = Object.values(
-          errors[0]?.constraints as object
-        ).reverse()[0];
-        return new BadRequestException({
-          message: firstErrorMessage,
-        });
-      },
-    });
-  }
-}
-```

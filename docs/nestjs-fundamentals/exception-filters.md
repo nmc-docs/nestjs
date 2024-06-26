@@ -7,82 +7,7 @@ sidebar_position: 5
 :::info
 
 - NestJS cung cấp cho ta một lớp gọi là **HttpException** và các lớp con kế thừa từ nó để xử lý exception được throw ra từ ứng dụng.
-
-:::
-
-## Ví dụ khi throw một exception
-
-- Ta có thể throw một exception ở hàm controller, hoặc service:
-
-```ts
-@Get()
-async findAll() {
-  throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
-}
-```
-
-Khi đó, lỗi trả về cho client sẽ có dạng:
-
-```json
-{
-  "statusCode": 403,
-  "message": "Forbidden"
-}
-```
-
-- Lớp **HttpException** nhận một tham số thứ 3 (optional) dùng để cung cấp error cause. Error cause này sẽ không trả về cho client, mà nó cung cấp các thông tin chi tiết về lỗi (thích hợp cho việc logging).
-
-```ts
-@Get()
-async findAll() {
-  try {
-    await this.service.findAll()
-  } catch (error) {
-    throw new HttpException({
-      status: HttpStatus.FORBIDDEN,
-      error: 'This is a custom message',
-    }, HttpStatus.FORBIDDEN, {
-      cause: error
-    });
-  }
-}
-```
-
-Khi đó, lỗi trả về cho client sẽ là:
-
-```json
-{
-  "status": 403,
-  "error": "This is a custom message"
-}
-```
-
-## Custom exception
-
-- Trong nhiều trường hợp, ta muốn tạo một custom exeption để tùy chỉnh lỗi (thêm các trường thông tin về error để trả về cho response). Để làm điều này, hãy tạo một class exception và extends từ **HttpExeption**.
-
-```ts
-import { HttpException, HttpStatus } from "@nestjs/common";
-
-type TRequestValitionErrorDetail = {
-  field: string;
-  error: string;
-};
-
-export class RequestValidationException extends HttpException {
-  constructor(errors: TRequestValitionErrorDetail[]) {
-    super(
-      { message: "Request validation failed", errorsDetail: errors },
-      HttpStatus.BAD_REQUEST
-    );
-  }
-}
-```
-
-## Built-in HTTP Exceptions
-
-- Dưới đây là các class exception mà NestJS cung cấp sẵn cho ta:
-
+- Một số built-in exception trong NestJS:
   - BadRequestException
   - UnauthorizedException
   - NotFoundException
@@ -104,19 +29,25 @@ export class RequestValidationException extends HttpException {
   - GatewayTimeoutException
   - PreconditionFailedException
 
-- Tất cả các class trên đều nhận **cause** và **description** làm tham số đầu vào (tùy chọn)
+:::
+
+## Ví dụ khi throw một exception
+
+- Ta có thể throw một exception ở hàm controller, hoặc service:
 
 ```ts
-throw new BadRequestException("Something bad happened", {
-  cause: new Error(),
-  description: "Some error description",
-});
+@Post('register')
+async register() {
+  throw new BadRequestException('Email already exists');
+}
 ```
+
+Khi đó, lỗi trả về cho client sẽ có dạng:
 
 ```json
 {
   "message": "Something bad happened",
-  "error": "Some error description",
+  "error": "Bad request",
   "statusCode": 400
 }
 ```
@@ -139,7 +70,7 @@ throw new BadRequestException("Something bad happened", {
   - Cấp độ global
   - Cấp độ controller
   - Cấp độ method
-- Để tạo một custom exception filter, ta **implements ExceptionFilter< T >** với T là type của exception.
+- Để tạo một custom exception filter, ta **implements ExceptionFilter**
 
 :::
 
@@ -199,18 +130,10 @@ export class UnauthorizedExceptionFilter implements ExceptionFilter {
 
 :::
 
-### Ví dụ về Catch All Exception
+## Catch All Exception
 
-- Trong nhiều trường hợp, có những exception được throw ra không thuộc hoặc không được kế thừa từ **HttpException** của NestJS, ví dụ như exception được throw ra từ **Error**. Những exception này mặc định NestJS trả về response là:
-
-```json
-{
-  "statusCode": 500,
-  "message": "Internal server error"
-}
-```
-
-- Nếu ra muốn bắt tất cả các exception như vậy và muốn custom lại response trả về cho client, hãy tạo 1 filter và sử dụng **@Catch()**.
+- Trong nhiều trường hợp, có những exception được throw ra không thuộc hoặc không được kế thừa từ **HttpException** của NestJS, ví dụ như exception được throw ra từ **Error**. Do đó, ta phải bắt tất cả các exception này, nếu không, ứng dụng sẽ bị crash.
+- Để bắt tất cả các exception như vậy, ta không truyền gì vào **@Catch()**
 
 ```ts
 import {
@@ -222,39 +145,15 @@ import {
 } from "@nestjs/common";
 import { Response } from "express";
 
+import { ExceptionResponse } from "src/common/dto/ExceptionResponse.dto";
+
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
   catch(exception: any, host: ArgumentsHost): void {
-    const ctx = host.switchToHttp();
-    const response = ctx.getResponse<Response>();
-    const isInstanceOfHttpException = exception instanceof HttpException;
-
-    const httpStatus = isInstanceOfHttpException
-      ? exception.getStatus()
-      : HttpStatus.INTERNAL_SERVER_ERROR;
-
-    const exceptionResponse = isInstanceOfHttpException
-      ? (exception.getResponse() as object)
-      : { message: exception.message, stack: exception.stack };
-
-    const responseBody = {
-      ...exceptionResponse,
-      statusCode: httpStatus,
-      timestamp: new Date().toISOString(),
-      path: ctx.getRequest().url,
-      error: undefined,
-    };
-
-    response.status(httpStatus).json(responseBody);
+    /* Logic of AllExceptionsFilter */
   }
 }
 ```
-
-:::info
-
-- Với exception filter ta vừa tạo bên trên, bất kỳ exception nào được throw ra từ ứng dụng, response trả về sẽ bao gồm các trường **statusCode**, **timestamp**, **path** và các thuộc tính khác của object error response mà ta truyền vào khi throw exception (như message,...).
-
-:::
 
 ## Ví dụ về các cấp độ sử dụng Exception Filters
 
