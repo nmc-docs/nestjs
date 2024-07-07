@@ -24,7 +24,9 @@ sidebar_position: 2
 :::info
 
 - Một module sẽ không resolve những provider nằm ngoài phạm vi của nó.
-- Một provider được module resolve nếu nó được truyền vào mảng **providers** khi cấu hình module, hoặc được export từ một module khác và module khác này phải được import vào module hiện tại.
+- Một provider được module resolve nếu:
+  - Nó được truyền vào mảng **providers** khi cấu hình module,
+  - Nó được export từ một module khác và module khác này phải được import vào module hiện tại.
 - Một module sử dụng controller, service, provider mà các controller, service, provider này sử dụng các thành phần phụ thuộc (tham số truyền vào constructor) thì các thành phần phụ thuộc đó cũng **PHẢI ĐƯỢC RESOLVE BỞI MODULE**.
 
 :::
@@ -136,196 +138,141 @@ export class UserService {
   - **register()**: Dùng khi ta muốn cấu hình dynamic module với 1 cấu hình cụ thể và chỉ dành riêng cho module gọi dynamic module này. Ví dụ với `@nestjs/axios`: `HttpModule.register({ baseUrl: 'someUrl' })` và nếu module khác ta cấu hình `HttpModule.register({ baseUrl: 'somewhere else' })`, nó sẽ có một cấu hình khác. Ta có thể cấu hình cho bao nhiêu module tùy thích.
   - **forRoot()**: Phương thức này được sử dụng để cấu hình và khởi tạo các thiết lập chung, chỉ thực hiện một lần duy nhất và thường áp dụng cho toàn bộ ứng dụng. Đây thường là nơi bạn cấu hình các thiết lập chung cho toàn bộ ứng dụng và thường được gọi trong module gốc (root module). Ví dụ như `TypeOrmModule.forRoot()`
   - **forFeature()**: Phương thức này vẫn dùng cấu hình chung ở forRoot nhưng lại được sử dụng trong các module con để cấu hình và đăng ký các tính năng hoặc cấu hình riêng cho module đó. Nó thường được dùng trong các module liên quan đến ORM (Object-Relational Mapping) như TypeORM hay Mongoose để đăng ký các entity hoặc schema cụ thể cho module.
+  - **registerAsync()**, **forRootAsync()**: Cũng giống như **register()**, **forRoot()** nhưng cho phép ta cấu hình module với các thiết lập bất đồng bộ hoặc sử dụng các dependency injection trong đó.
 
 :::
 
-### Ví dụ 1
+### Ví dụ dynamic module RedisModule
 
-- Sau đây ta sẽ tạo một dynamic module tên DatabaseModule:
+- Tạo type cho options:
 
 ```ts
-import { Module, DynamicModule, Provider } from "@nestjs/common";
+import { RedisOptions } from "ioredis";
+
+export interface IRedisModuleAsyncOptions {
+  imports?: any[];
+  useFactory?: (...args: any[]) => Promise<RedisOptions> | RedisOptions;
+  inject?: any[];
+  isGlobal?: boolean;
+}
+
+export interface IRedisModuleOptions extends RedisOptions {
+  isGlobal?: boolean;
+}
+```
+
+- Tạo dynamic module:
+
+```ts
+import { DynamicModule, Module } from "@nestjs/common";
+
+import { EProviderKey } from "src/common/constants/enum";
+import { RedisService } from "src/modules/libs/redis/redis.service";
 import {
-  createConnection,
-  Connection,
-  Repository,
-  EntitySchema,
-} from "typeorm";
-import { TypeOrmModuleOptions } from "@nestjs/typeorm";
+  IRedisModuleAsyncOptions,
+  IRedisModuleOptions,
+} from "src/modules/libs/redis/types/redis-module.type";
 
 @Module({})
-export class DatabaseModule {
-  static forRoot(options: TypeOrmModuleOptions): DynamicModule {
-    const connectionProvider = {
-      provide: "DATABASE_CONNECTION",
-      useFactory: async () => await createConnection(options),
-    };
-
+export class RedisModule {
+  static forRootAsync(options: IRedisModuleAsyncOptions): DynamicModule {
+    const defaultFactory = (...args: any[]) => null;
     return {
-      module: DatabaseModule,
-      providers: [connectionProvider],
-      exports: [connectionProvider],
+      module: RedisModule,
+      imports: options.imports || [],
+      providers: [
+        RedisService,
+        {
+          provide: EProviderKey.REDIS_OPTIONS,
+          useFactory: options.useFactory || defaultFactory,
+          inject: options.inject || [],
+        },
+      ],
+      exports: [RedisService],
+      global: options.isGlobal ?? false,
     };
   }
 
-  static forFeature(entities: Function[] | EntitySchema<any>[]): DynamicModule {
-    const repositories = entities.map((entity) => ({
-      provide: `${entity.name}Repository`,
-      useFactory: (connection: Connection) => connection.getRepository(entity),
-      inject: ["DATABASE_CONNECTION"],
-    }));
-
+  static forRoot(options: IRedisModuleOptions): DynamicModule {
     return {
-      module: DatabaseModule,
-      providers: repositories,
-      exports: repositories,
+      module: RedisModule,
+      providers: [
+        RedisService,
+        { provide: EProviderKey.REDIS_OPTIONS, useValue: options },
+      ],
+      exports: [RedisService],
+      global: options.isGlobal ?? false,
     };
   }
 }
 ```
 
-- Tiếp theo, ta sẽ sử dụng `DatabaseModule.forRoot()` và truyền cấu hình database vào nó ở file **app.module.ts**:
+- Tạo RedisService:
 
 ```ts
-import { Module } from "@nestjs/common";
-import { DatabaseModule } from "./database.module";
+import { Inject, Injectable, Logger, OnModuleInit } from "@nestjs/common";
+import { Redis, RedisOptions } from "ioredis";
 
+import { EProviderKey } from "src/common/constants/enum";
+
+@Injectable()
+export class RedisService extends Redis implements OnModuleInit {
+  private readonly logger = new Logger(RedisService.name);
+
+  constructor(
+    @Inject(EProviderKey.REDIS_OPTIONS)
+    options: RedisOptions
+  ) {
+    super(options);
+  }
+
+  async onModuleInit() {
+    try {
+      const redisInfo = await this.info();
+      await this.config("SET", "notify-keyspace-events", "KEA");
+      this.logger.log("🚀 Connect to Redis successfully!");
+    } catch (error) {
+      this.disconnect();
+      throw new Error(
+        `❌ Connect to Redis failed: ${(error as Error).message}`
+      );
+    }
+  }
+}
+```
+
+- Sau đó, ở app.module.ts:
+
+```ts
 @Module({
   imports: [
-    DatabaseModule.forRoot({
-      type: "postgres",
+    RedisModule.forRoot({
+      isGlobal: true,
       host: "localhost",
-      port: 5432,
-      username: "test",
-      password: "test",
-      database: "test",
+      port: 6379,
+      password: "ptit_150920022",
     }),
   ],
 })
 export class AppModule {}
 ```
 
-- Tiếp theo, tại UserModule, vì module này ta chỉ muốn sử dụng repository với model là User cho nên ta chỉ cần truyền User vào `DatabaseModule.forFeature([User])`. Tương tự đối với các module khác, sử dụng repository của model nào, chỉ cần truyền model đó vào hàm forFeature(), đó gọi là dynamic module.
-
 ```ts
-import { Module } from "@nestjs/common";
-import { DatabaseModule } from "./database.module";
-import { User } from "./user.entity";
-import { UserService } from "./user.service.ts";
-
 @Module({
-  imports: [DatabaseModule.forFeature([User])],
-  providers: [UserService],
-})
-export class UserModule {}
-```
-
-```ts
-import { Injectable, Inject } from "@nestjs/common";
-import { Repository } from "typeorm";
-import { User } from "./user.entity";
-
-@Injectable()
-export class UserService {
-  constructor(
-    @Inject("UserRepository") private readonly userRepository: Repository<User>
-  ) {}
-
-  // Implement your service methods here
-}
-```
-
-### Ví dụ 2
-
-- Sau đây ta sẽ tạo dynamic module có service chứa phương thức lấy giá trị biến môi trường (Variables Environment):
-
-```ts
-export interface ConfigModuleOptions {
-  folder: string;
-}
-
-@Module({})
-export class ConfigModule {
-  static register(options: ConfigModuleOptions): DynamicModule {
-    return {
-      module: ConfigModule,
-      providers: [
-        {
-          provide: "CONFIG_OPTIONS",
-          useValue: options,
-        },
-        ConfigService,
-      ],
-      exports: [ConfigService],
-    };
-  }
-}
-
-import * as dotenv from "dotenv";
-import * as fs from "fs";
-import { Injectable, Inject } from "@nestjs/common";
-import { EnvConfig } from "./interfaces";
-
-@Injectable()
-export class ConfigService {
-  private readonly envConfig: EnvConfig;
-
-  constructor(@Inject("CONFIG_OPTIONS") private options) {
-    const filePath = `${process.env.NODE_ENV || "development"}.env`;
-    const envFile = path.resolve(__dirname, "../../", options.folder, filePath);
-    this.envConfig = dotenv.parse(fs.readFileSync(envFile));
-  }
-
-  get(key: string): string {
-    return this.envConfig[key];
-  }
-}
-```
-
-- Sau đó, gọi hàm register ở file **app.module.ts:**
-
-```ts
-import { Module } from "@nestjs/common";
-import { AppController } from "./app.controller";
-import { AppService } from "./app.service";
-import { ConfigModule } from "./config/config.module";
-
-@Module({
-  imports: [ConfigModule.register({ folder: "./config" })],
-  controllers: [AppController],
-  providers: [AppService],
+  imports: [
+    RedisModule.forRootAsync({
+      isGlobal: true,
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService<IEnvironmentVariables>) => ({
+        host: configService.get<string>("REDIS_HOST"),
+        port: configService.get<number>("REDIS_PORT"),
+        password: configService.get<string>("REDIS_PASSWORD"),
+      }),
+      inject: [ConfigService],
+    }),
+  ],
 })
 export class AppModule {}
-```
-
-- Tiếp theo, import vào module muốn sử dụng, chẳng hạn như AuthModule:
-
-```ts
-// auth.module.ts
-import { Module } from "@nestjs/common";
-import { AuthService } from "./auth.service";
-
-@Module({
-  imports: [ConfigModule],
-  providers: [AuthService],
-  exports: [AuthService],
-})
-export class AuthModule {}
-```
-
-- Sử dụng ConfigService ở AuthService:
-
-```ts
-// auth.service.ts
-
-@Injectable()
-export class AuthService {
-  constructor(private configService: ConfigService) {}
-  async validateUser(username: string, password: string): Promise<any> {
-    const secretKey = this.configService.get("SECRET_KEY");
-    return { userId: 1, username: "john_doe" };
-  }
-}
 ```
 
 ## Global module
