@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="generator" content="Docusaurus v3.4.0">
 <title data-rh="true">Providers | NestJS</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:url" content="https://github.com/nestjs/nestjs-fundamentals/providers"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="Providers | NestJS"><meta data-rh="true" name="description" content="Dependency Injection (DI) là gì?"><meta data-rh="true" property="og:description" content="Dependency Injection (DI) là gì?"><link data-rh="true" rel="icon" href="/nestjs/img/logo.svg"><link data-rh="true" rel="canonical" href="https://github.com/nestjs/nestjs-fundamentals/providers"><link data-rh="true" rel="alternate" href="https://github.com/nestjs/nestjs-fundamentals/providers" hreflang="en"><link data-rh="true" rel="alternate" href="https://github.com/nestjs/nestjs-fundamentals/providers" hreflang="x-default"><link rel="stylesheet" href="/nestjs/assets/css/styles.62a3de07.css">
-<script src="/nestjs/assets/js/runtime~main.ae1bb98c.js" defer="defer"></script>
+<script src="/nestjs/assets/js/runtime~main.983f9481.js" defer="defer"></script>
 <script src="/nestjs/assets/js/main.37434f1f.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
@@ -69,8 +69,8 @@
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="usefactory">useFactory<a class="hash-link" aria-label="Direct link to useFactory" title="Direct link to useFactory" href="/nestjs/nestjs-fundamentals/providers#usefactory">​</a></h3>
 <div class="theme-admonition theme-admonition-info admonition_xJq3 alert alert--info"><div class="admonitionHeading_Gvgb"><span class="admonitionIcon_Rf37"><svg viewBox="0 0 14 16"><path fill-rule="evenodd" d="M7 2.3c3.14 0 5.7 2.56 5.7 5.7s-2.56 5.7-5.7 5.7A5.71 5.71 0 0 1 1.3 8c0-3.14 2.56-5.7 5.7-5.7zM7 1C3.14 1 0 4.14 0 8s3.14 7 7 7 7-3.14 7-7-3.14-7-7-7zm1 3H6v5h2V4zm0 6H6v2h2v-2z"></path></svg></span>info</div><div class="admonitionContent_BuS1"><ul>
 <li><strong>useFactory</strong> provider trong NestJS là một cách rất mạnh mẽ để cung cấp các provider động. Nó cho phép viết một hàm factory để tạo ra instance của provider, có thể sử dụng các dependencies khác và các tham số cấu hình làm tham số.</li>
-<li>Provider chính là giá trị được trả về từ hàm factory (có thể là một instance)</li>
-<li>Hàm factory có thể nhận tham số đầu vào, và chúng <strong>PHẢI LÀ PROVIDER</strong>, phải được truyền vào mảng property <strong>inject</strong> và quan trọng nó phải được <a href="/nestjs/nestjs-fundamentals/modules#m%E1%BB%99t-provider-%C4%91%C6%B0%E1%BB%A3c-resolve-b%E1%BB%9Fi-module-khi-n%C3%A0o">module resolve</a>.</li>
+<li>Provider chính là giá trị được trả về từ hàm factory (có thể là một instance hoặc một giá trị)</li>
+<li>Hàm <strong>useFactory()</strong> có thể nhận tham số đầu vào, và chúng <strong>PHẢI LÀ PROVIDER</strong>, phải được truyền vào mảng property <strong>inject</strong> và quan trọng nó phải được <a href="/nestjs/nestjs-fundamentals/modules#m%E1%BB%99t-provider-%C4%91%C6%B0%E1%BB%A3c-resolve-b%E1%BB%9Fi-module-khi-n%C3%A0o">module resolve</a>.</li>
 </ul></div></div>
 <ul>
 <li>Ví dụ:</li>
