@@ -1,7 +1,6 @@
 ---
 sidebar_position: 2
 ---
-
 # Modules
 
 ## Module là gì?
@@ -45,10 +44,16 @@ nest g module [MODULE_NAME]
 nest g module modules/customer
 ```
 
-## Chia sẻ giữa các module
+## Import/export
 
-- Đôi khi, chúng ta cần sử dụng một provider của một module khác bên trong module hiện tại, ví dụ như service B của module B cần sử dụng phương thức của server A của module A.
+:::info
+
 - Để có thể sử dụng provider của một module khác, ta sử dụng **import** và **export**.
+- Lưu ý rằng, khi ta import một module thì chỉ sử dụng được các provider mà được **export** ra ở module đó.
+- Chỉ **export** ra được những provider mà nằm trong mảng **providers** của module.
+
+:::
+
 - Ví dụ sau đây mô tả cách sử dụng provider của AuthModule bên trong UserModule:
 
 1. Tạo AuthService:
@@ -114,13 +119,6 @@ export class UserService {
   }
 }
 ```
-
-:::note
-
-- Lưu ý rằng, khi ta import một module thì chỉ sử dụng được các provider mà được export ra ở module đó.
-- Chỉ export ra được những provider mà nằm trong mảng providers của module.
-
-:::
 
 ## Dynamic module
 

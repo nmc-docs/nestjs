@@ -236,16 +236,12 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     if (exception instanceof HttpException) {
       statusCode = exception.getStatus();
-
-      if (statusCode !== HttpStatus.INTERNAL_SERVER_ERROR) {
-        const exceptionResponseMessage: string | string[] | undefined = (
-          exception.getResponse() as any
-        )?.message;
-
-        message = Array.isArray(exceptionResponseMessage)
-          ? exceptionResponseMessage.join(", ")
-          : exceptionResponseMessage || "Unknown error";
-      }
+      const exceptionResponseMessage: string | string[] | undefined = (
+        exception.getResponse() as any
+      )?.message;
+      message = Array.isArray(exceptionResponseMessage)
+        ? exceptionResponseMessage.join(", ")
+        : exceptionResponseMessage || "Unknown error message";
 
       responseBody = {
         ...responseBody,
@@ -262,7 +258,6 @@ export class AllExceptionsFilter implements ExceptionFilter {
     response.status(statusCode).json(responseBody);
   }
 
-  //Hàm xử lý việc ghi log
   private handleLogger(request: Request, exception: HttpException | Error) {
     const statusCode =
       exception instanceof HttpException

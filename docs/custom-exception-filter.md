@@ -34,7 +34,7 @@ export class ExceptionResponse {
 }
 ```
 
-- Tạo exception filter:
+- Tạo **all-exception-filter.ts**:
 
 ```ts
 import {
@@ -43,6 +43,7 @@ import {
   ExceptionFilter,
   HttpException,
   HttpStatus,
+  Logger,
 } from "@nestjs/common";
 import { plainToInstance } from "class-transformer";
 import { Request, Response } from "express";
@@ -51,12 +52,15 @@ import { ExceptionResponse } from "src/common/dto/ExceptionResponse.dto";
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
+  private readonly logger = new Logger(AllExceptionsFilter.name);
+
   catch(exception: HttpException | Error, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
 
     this.handleResponse(request, response, exception);
+    this.handleLogger(request, exception);
   }
 
   private handleResponse(
@@ -74,16 +78,12 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     if (exception instanceof HttpException) {
       statusCode = exception.getStatus();
-
-      if (statusCode !== HttpStatus.INTERNAL_SERVER_ERROR) {
-        const exceptionResponseMessage: string | string[] | undefined = (
-          exception.getResponse() as any
-        )?.message;
-
-        message = Array.isArray(exceptionResponseMessage)
-          ? exceptionResponseMessage.join(", ")
-          : exceptionResponseMessage || "Unknown error";
-      }
+      const exceptionResponseMessage: string | string[] | undefined = (
+        exception.getResponse() as any
+      )?.message;
+      message = Array.isArray(exceptionResponseMessage)
+        ? exceptionResponseMessage.join(", ")
+        : exceptionResponseMessage || "Unknown error message";
 
       responseBody = {
         ...responseBody,
@@ -99,5 +99,31 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     response.status(statusCode).json(responseBody);
   }
+
+  private handleLogger(request: Request, exception: HttpException | Error) {
+    const statusCode =
+      exception instanceof HttpException
+        ? exception.getStatus()
+        : HttpStatus.INTERNAL_SERVER_ERROR;
+
+    if (statusCode === HttpStatus.INTERNAL_SERVER_ERROR) {
+      this.logger.error(
+        `${request.method} ${
+          request.url
+        } - ${statusCode} - ${exception.stack?.toString()}`
+      );
+    }
+  }
 }
+```
+
+- Cuối cùng, ở file **app.module.ts**:
+
+```ts
+import { APP_FILTER } from "@nestjs/core";
+
+@Module({
+  providers: [{ provide: APP_FILTER, useClass: AllExceptionsFilter }],
+})
+export class AppModule {}
 ```
