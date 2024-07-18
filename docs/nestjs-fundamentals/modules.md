@@ -1,6 +1,7 @@
 ---
 sidebar_position: 2
 ---
+
 # Modules
 
 ## Module là gì?
@@ -26,7 +27,7 @@ sidebar_position: 2
 - Một provider được module resolve nếu:
   - Nó được truyền vào mảng **providers** khi cấu hình module,
   - Nó được export từ một module khác và module khác này phải được import vào module hiện tại.
-- Một module sử dụng controller, service, provider mà các controller, service, provider này sử dụng các thành phần phụ thuộc (tham số truyền vào constructor) thì các thành phần phụ thuộc đó cũng **PHẢI ĐƯỢC RESOLVE BỞI MODULE**.
+- Khi một service được truyền vào mảng **providers** của một module mà service này sử dụng các thành phần phụ thuộc khác (tham số truyền vào constructor) thì các thành phần phụ thuộc đó cũng phải được resolve bởi module
 
 :::
 
