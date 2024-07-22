@@ -78,19 +78,21 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     if (exception instanceof HttpException) {
       statusCode = exception.getStatus();
-      const exceptionResponseMessage: string | string[] | undefined = (
-        exception.getResponse() as any
-      )?.message;
-      message = Array.isArray(exceptionResponseMessage)
-        ? exceptionResponseMessage.join(", ")
-        : exceptionResponseMessage || "Unknown error message";
+      if (statusCode !== HttpStatus.INTERNAL_SERVER_ERROR) {
+        const exceptionResponseMessage: string | string[] | undefined = (
+          exception.getResponse() as any
+        )?.message;
+        message = Array.isArray(exceptionResponseMessage)
+          ? exceptionResponseMessage.join(", ")
+          : exceptionResponseMessage || "Unknown error message";
 
-      responseBody = {
-        ...responseBody,
-        ...(exception.getResponse() as object),
-        message,
-        statusCode,
-      };
+        responseBody = {
+          ...responseBody,
+          ...(exception.getResponse() as object),
+          message,
+          statusCode,
+        };
+      }
     }
 
     responseBody = plainToInstance(ExceptionResponse, responseBody, {
@@ -98,21 +100,6 @@ export class AllExceptionsFilter implements ExceptionFilter {
     });
 
     response.status(statusCode).json(responseBody);
-  }
-
-  private handleLogger(request: Request, exception: HttpException | Error) {
-    const statusCode =
-      exception instanceof HttpException
-        ? exception.getStatus()
-        : HttpStatus.INTERNAL_SERVER_ERROR;
-
-    if (statusCode === HttpStatus.INTERNAL_SERVER_ERROR) {
-      this.logger.error(
-        `${request.method} ${
-          request.url
-        } - ${statusCode} - ${exception.stack?.toString()}`
-      );
-    }
   }
 }
 ```
