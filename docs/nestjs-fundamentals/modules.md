@@ -1,7 +1,6 @@
 ---
 sidebar_position: 2
 ---
-
 # Modules
 
 ## Module là gì?
@@ -45,11 +44,143 @@ nest g module [MODULE_NAME]
 nest g module modules/customer
 ```
 
+## Các cách đăng ký Provider trong Module
+
+:::note
+
+- Ngoài cách tạo provider thông qua decorator `@Injectable()`, và đăng ký bằng cách truyền class provider vào mảng các providers trong module (Xem [tại đây](./providers#định-nghĩa-provider)), NestJS cung cấp cho ta 3 hook để tạo và đăng ký một provider trong module.
+
+:::
+
+### useClass
+
+:::info
+
+- **useClass** provider trong NestJS là một cách để cung cấp một class như một provider cho một module. Nó cho phép bạn chỉ định một class sẽ được sử dụng khi một provider được yêu cầu.
+
+:::
+
+```ts
+import { Module } from "@nestjs/common";
+import { CatsController } from "./cats/cats.controller";
+import { CatsService } from "./cats/cats.service";
+
+@Module({
+  controllers: [CatsController],
+  providers: [
+    {
+      provide: "CatsService",
+      useClass: CatsService,
+    },
+  ],
+})
+export class CatsModule {}
+```
+
+### useValue
+
+:::info
+
+- **useValue** provider trong NestJS cho phép bạn cung cấp một giá trị cụ thể (literal value) cho một provider. Điều này rất hữu ích khi bạn muốn cung cấp một cấu hình, một constant, hoặc một mock object cho các unit test.
+
+:::
+
+```ts
+export interface IExampleUseValue {
+  apiUrl: string;
+  host: number;
+}
+
+@Module({
+  controllers: [CustomersController],
+  providers: [
+    {
+      provide: "EXAMPLE_USE_VALUE",
+      useValue: {
+        apiUrl: "http://example.com",
+        host: 3000,
+      } as IExampleUseValue,
+    },
+  ],
+})
+export class CustomersModule {}
+```
+
+### useFactory
+
+:::info
+
+- **useFactory()** được sử dụng để chỉ định một hàm sẽ được gọi để tạo ra giá trị của provider. Hàm này có thể nhận các phụ thuộc khác như là tham số.
+- Provider chính là giá trị được trả về từ hàm factory (có thể là một instance hoặc một giá trị)
+- Hàm **useFactory()** có thể nhận tham số đầu vào, và chúng **PHẢI LÀ PROVIDER**, phải được truyền vào mảng property **inject** và quan trọng nó phải được [module resolve](./modules#một-provider-được-resolve-bởi-module-khi-nào).
+
+:::
+
+- Ví dụ 1:
+
+```ts
+const connectionProvider = {
+  provide: "CONNECTION",
+  useFactory: (optionsProvider: OptionsProvider, optionalProvider?: string) => {
+    const options = optionsProvider.get();
+    return new DatabaseConnection(options);
+  },
+  inject: [OptionsProvider, { token: "SomeOptionalProvider", optional: true }],
+  //       \_____________/            \__________________/
+  //        This provider              The provider with this
+  //        is mandatory.              token can resolve to `undefined`.
+};
+
+@Module({
+  providers: [
+    connectionProvider,
+    OptionsProvider,
+    { provide: "SomeOptionalProvider", useValue: "anything" },
+  ],
+})
+export class AppModule {}
+```
+
+## Cách inject provider trong provider khác
+
+:::info
+
+- Vì khi sử dụng `useClass()`, `useValue()`, `useFactory()` để tạo và đăng ký provider cho module. Mỗi provider sẽ có một ID riêng (chính là giá trị chuỗi mà ta cung cấp ở thuộc tính `provide`). Do đó, để inject chúng ở các provider khác, ta sẽ sử dụng decorator `@Inject()`
+
+:::
+
+```ts
+@Module({
+  controllers: [CatsController],
+  providers: [
+    {
+      provide: "CatsService",
+      useClass: CatsService,
+    },
+    MeowService,
+  ],
+})
+export class CatsModule {}
+```
+
+```ts
+@Injectable()
+export class MeowService {
+  constructor(@Inject("CatsService") private catsService: CatsService) {}
+}
+```
+
+:::tip
+
+- Ta thường tạo file mới để định nghĩa key cho các provider thông qua enum
+
+:::
+
 ## Import/export
 
 :::info
 
-- Để có thể sử dụng provider của một module khác, ta sử dụng **import** và **export**.
+- Ta có thể chia sẻ các provider của một module cho các module khác bằng cách sử dụng **import** và **export**.
 - Lưu ý rằng, khi ta import một module thì chỉ sử dụng được các provider mà được **export** ra ở module đó.
 - Chỉ **export** ra được những provider mà nằm trong mảng **providers** của module.
 
