@@ -50,7 +50,7 @@ const config = {
         },
         items: [
           {
-            href: "https://github.com/minhchi1509",
+            href: "https://github.com/nmc-docs/nestjs",
             label: "GitHub",
             position: "right",
           },
