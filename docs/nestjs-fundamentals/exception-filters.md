@@ -78,8 +78,7 @@ Khi đó, lỗi trả về cho client sẽ có dạng:
 
 - Trong ví dụ sau, ta tạo 1 custom exception filter để xử lý những **HttpException** và trả về error response cho client bao gồm 3 trường là: **statusCode**, **timestamp** và **path**.
 
-```ts
-//http-exception.filter.ts
+```ts title="http-exception.filter.ts"
 import {
   ExceptionFilter,
   Catch,
@@ -110,8 +109,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
 - Trong ví dụ trên, tất cả các exception là **HttpException** hoặc được kế thừa từ **HttpExeption** đều được xử lý bởi **HttpExceptionFilter**. Nếu ta muốn tạo exception filter để chỉ xử lý một exception cụ thể nào đó, hãy truyền exception đó vào **@Catch()**.
 - Ví dụ exception filter dưới đây chỉ xử lý cho **UnauthorizedException**:
 
-```ts
-//http-exception.filter.ts
+```ts title="unauthorized-exception.filter.ts"
 import {
   ExceptionFilter,
   Catch,
@@ -135,7 +133,7 @@ export class UnauthorizedExceptionFilter implements ExceptionFilter {
 - Trong nhiều trường hợp, có những exception được throw ra không thuộc hoặc không được kế thừa từ **HttpException** của NestJS, ví dụ như exception được throw ra từ **Error**. Do đó, ta phải bắt tất cả các exception này, nếu không, ứng dụng sẽ bị crash.
 - Để bắt tất cả các exception như vậy, ta không truyền gì vào **@Catch()**
 
-```ts
+```ts title="all-exceptions.filter.ts"
 import {
   ArgumentsHost,
   Catch,
@@ -159,7 +157,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
 ### Cấp độ Global
 
-```ts
+```ts title="main.ts"
 import { NestFactory } from "@nestjs/core";
 
 import { AppModule } from "./app.module";
@@ -175,7 +173,7 @@ bootstrap();
 
 - Hoặc cấu hình global trong AppModule:
 
-```ts
+```ts title="app.module.ts"
 @Module({
   controllers: [],
   providers: [
@@ -190,7 +188,7 @@ export class AppModule {}
 
 ### Cấp độ controller
 
-```ts
+```ts title="customers.controller.ts"
 import { Body, Controller, Get, Post, UseFilters } from "@nestjs/common";
 
 import { AllExceptionsFilter } from "src/common/filters/request-validation-exception.filter";
@@ -215,7 +213,7 @@ export class CustomersController {
 
 ### Cấp độ method
 
-```ts
+```ts title="customers.controller.ts"
 import { Body, Controller, Get, Post, UseFilters } from "@nestjs/common";
 
 import { AllExceptionsFilter } from "src/common/filters/request-validation-exception.filter";

@@ -19,7 +19,7 @@ sidebar_position: 5
 
 - Đầu tiên, tạo **ExceptionResponse.dto.ts**:
 
-```ts
+```ts title="exception-response.dto.ts"
 import { Expose } from "class-transformer";
 
 export class ExceptionResponse {
@@ -36,7 +36,7 @@ export class ExceptionResponse {
 
 - Tạo **all-exception-filter.ts**:
 
-```ts
+```ts title="all-exception-filter.ts"
 import {
   ArgumentsHost,
   Catch,
@@ -106,7 +106,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
 - Cuối cùng, ở file **app.module.ts**:
 
-```ts
+```ts title="app.module.ts"
 import { APP_FILTER } from "@nestjs/core";
 
 @Module({

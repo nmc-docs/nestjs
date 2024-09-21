@@ -46,7 +46,7 @@ sidebar_position: 4
 
 - Dưới đây là một ví dụ về sử dụng **ParseIntPipe** để validate cũng như transform param "id" về number:
 
-```ts
+```ts title="customers.controller.ts"
 import { Controller, Get, Param, ParseIntPipe } from "@nestjs/common";
 
 import { CustomersService } from "src/modules/customers/customers.service";
@@ -76,7 +76,7 @@ export class CustomersController {
 - Còn khi gửi request đến endpoint: "/customers/15" thì sẽ trả về response, và **userId** sẽ có kiểu là number thay vì string như mặc định do **ParseIntPipe** sẽ tự động chuyển về number.
 - Để custom message hay response status code, ta làm như sau:
 
-```ts
+```ts title="customers.controller.ts"
 import {,
   Controller,
   ForbiddenException,
@@ -115,7 +115,7 @@ export class CustomersController {
 
 - Ví dụ sau đây sử dụng **DefaultValuePipe** để thiết lập giá trị mặc định nếu không truyền vào:
 
-```ts
+```ts title="customers.controller.ts"
 import {
   Controller,
   DefaultValuePipe,
@@ -151,7 +151,7 @@ npm install class-transformer class-validator
 
 - Ta tạo một class "CreateCustomerDTO" định nghĩa các trường dữ liệu cho body, sử dụng các validation decorator của thư viện trên để validate:
 
-```ts
+```ts title="create-customer.dto.ts"
 import { IsEmail, IsNotEmpty, IsString } from "class-validator";
 
 class CreateCustomerDto {
@@ -173,7 +173,7 @@ export default CreateCustomerDto;
 
 - Sau đó gọi đến pipe **ValidationPipe**:
 
-```ts
+```ts title="customers.controller.ts"
 import { Body, Controller, Post, ValidationPipe } from "@nestjs/common";
 
 import { CustomersService } from "src/modules/customers/customers.service";
@@ -217,7 +217,7 @@ export class CustomersController {
 
 ### Cấp độ Global
 
-```ts
+```ts title="main.ts"
 import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./app.module";
 import { ValidationPipe } from "@nestjs/common";
@@ -232,7 +232,7 @@ bootstrap();
 
 - Hoặc cấu hình global trong AppModule:
 
-```ts
+```ts title="app.module.ts"
 @Module({
   controllers: [],
   providers: [
@@ -247,7 +247,7 @@ export class AppModule {}
 
 ### Cấp độ Controller
 
-```ts
+```ts title="customers.controller.ts"
 import {
   Body,
   Controller,
@@ -280,7 +280,7 @@ export class CustomersController {
 
 ### Cấp độ method
 
-```ts
+```ts title="customers.controller.ts"
 import {
   Body,
   Controller,
@@ -316,7 +316,7 @@ export class CustomersController {
 
 ### Cấp độ parameter
 
-```ts
+```ts title="customers.controller.ts"
 import { Body, Controller, Post, Query, ValidationPipe } from "@nestjs/common";
 
 import { CustomersService } from "src/modules/customers/customers.service";
@@ -342,7 +342,7 @@ export class CustomersController {
 - Để tạo một pipe mới, ta phải implements **PipeTransform< T, U >**. Với **T** là kiểu dữ liệu đầu vào, **U** là kiểu dữ liệu đầu ra sau khi transform.
 - Ví dụ dưới đây ta sẽ tạo một pipe đơn giản giống **ParseIntPipe**:
 
-```ts
+```ts title="parse-int.pipe.ts"
 import {
   ArgumentMetadata,
   BadRequestException,
@@ -364,7 +364,7 @@ export class ParseIntPipe implements PipeTransform<string, number> {
 
 - Ví dụ tiếp là tạo 1 pipe tương tự **ValidationPipe**:
 
-```ts
+```ts title="validation.pipe.ts"
 import {
   PipeTransform,
   Injectable,

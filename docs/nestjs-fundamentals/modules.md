@@ -1,6 +1,7 @@
 ---
 sidebar_position: 2
 ---
+
 # Modules
 
 ## Module là gì?
@@ -61,7 +62,7 @@ nest g module modules/customer
 
 :::
 
-```ts
+```ts title="cats.module.ts"
 import { Module } from "@nestjs/common";
 import { CatsController } from "./cats/cats.controller";
 import { CatsService } from "./cats/cats.service";
@@ -86,7 +87,7 @@ export class CatsModule {}
 
 :::
 
-```ts
+```ts title="customer.module.ts"
 export interface IExampleUseValue {
   apiUrl: string;
   host: number;
@@ -119,7 +120,7 @@ export class CustomersModule {}
 
 - Ví dụ 1:
 
-```ts
+```ts title="app.module.ts"
 const connectionProvider = {
   provide: "CONNECTION",
   useFactory: (optionsProvider: OptionsProvider, optionalProvider?: string) => {
@@ -150,7 +151,7 @@ export class AppModule {}
 
 :::
 
-```ts
+```ts title="cat.module.ts"
 @Module({
   controllers: [CatsController],
   providers: [
@@ -164,7 +165,7 @@ export class AppModule {}
 export class CatsModule {}
 ```
 
-```ts
+```ts title="meow.service.ts"
 @Injectable()
 export class MeowService {
   constructor(@Inject("CatsService") private catsService: CatsService) {}
@@ -191,8 +192,7 @@ export class MeowService {
 
 1. Tạo AuthService:
 
-```ts
-// auth.service.ts
+```ts title="auth.service.ts"
 import { Injectable } from "@nestjs/common";
 
 @Injectable()
@@ -206,8 +206,7 @@ export class AuthService {
 
 2. Tạo AuthModule, có provider là AuthService và export nó ra để cho module khác sử dụng:
 
-```ts
-// auth.module.ts
+```ts title="auth.module.ts"
 import { Module } from "@nestjs/common";
 import { AuthService } from "./auth.service";
 
@@ -220,8 +219,7 @@ export class AuthModule {}
 
 3. Sau đó import AuthModule vào bên trong UserModule:
 
-```ts
-// user.module.ts
+```ts title="user.module.ts"
 import { Module } from "@nestjs/common";
 import { UserService } from "./user.service";
 import { AuthModule } from "../auth/auth.module";
@@ -236,8 +234,7 @@ export class UserModule {}
 
 4. Và giờ có thể sử dụng các phương thức của provider AuthService bên trong UserService:
 
-```ts
-// user.service.ts
+```ts title="user.service.ts"
 import { Injectable } from "@nestjs/common";
 import { AuthService } from "../auth/auth.service";
 
@@ -277,7 +274,7 @@ export class UserService {
 
 - Tạo type cho options:
 
-```ts
+```ts title="redis-module.type.ts"
 import { RedisOptions } from "ioredis";
 
 export interface IRedisModuleAsyncOptions {
@@ -294,7 +291,7 @@ export interface IRedisModuleOptions extends RedisOptions {
 
 - Tạo dynamic module:
 
-```ts
+```ts title="redis.module.ts"
 import { DynamicModule, Module } from "@nestjs/common";
 
 import { EProviderKey } from "src/common/constants/enum";
@@ -340,7 +337,7 @@ export class RedisModule {
 
 - Tạo RedisService:
 
-```ts
+```ts title="redis.service.ts"
 import { Inject, Injectable, Logger, OnModuleInit } from "@nestjs/common";
 import { Redis, RedisOptions } from "ioredis";
 
@@ -374,7 +371,7 @@ export class RedisService extends Redis implements OnModuleInit {
 
 - Sau đó, ở các module mà ta muốn sử dụng RedisModule:
 
-```ts
+```ts title="auth.module.ts"
 @Module({
   imports: [
     RedisModule.register({
@@ -387,7 +384,7 @@ export class RedisService extends Redis implements OnModuleInit {
 export class AuthModule {}
 ```
 
-```ts
+```ts title="orders.module.ts"
 @Module({
   imports: [
     RedisModule.registerAsync({
@@ -409,7 +406,7 @@ export class OrdersModule {}
 - Như đã nói bên trên, để sử dụng một service, hay một provider của một module (gọi là ModuleA), ta phải import ModuleA đó vào. Nhưng nếu service, hay provider đó được sử dụng ở rất nhiều nơi, thì mỗi lần dùng ta lại phải import ModuleA đó vào, điều này có thể gây bất tiện. Để giải quyết điều này, hãy đánh dấu ModuleA bởi decorator **@Global()**. Sau đó, ta có thể sử dụng trực tiếp các service, provider mà không cần phải import ModuleA.
 - Ví dụ:
 
-```ts
+```ts title="cats.module.ts"
 import { Module, Global } from "@nestjs/common";
 import { CatsController } from "./cats.controller";
 import { CatsService } from "./cats.service";

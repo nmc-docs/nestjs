@@ -14,7 +14,7 @@ npm i @nestjs/config joi
 
 - Sau đó ở file **app.module.ts**:
 
-```ts
+```ts title="app.module.ts"
 @Module({
   imports: [
     CustomersModule,
@@ -39,7 +39,7 @@ export class AppModule {}
 
 - File định nghĩa type cho các biến môi trường:
 
-```ts
+```ts title="env.type.ts"
 export type IEnvironmentVariables = {
   NODE_ENV: "development" | "production" | "staging";
   NEST_SERVER_PORT: number;
@@ -58,7 +58,7 @@ export type IEnvironmentVariables = {
 
 - Và giờ ta có thể lấy giá trị của biến môi trường thông qua phương thức **get()** của **ConfigService**:
 
-```ts
+```ts title="customers.controller.ts"
 @Controller("customers")
 export class CustomersController {
   constructor(
@@ -71,7 +71,8 @@ export class CustomersController {
     @Body()
     body: CreateCustomerDto
   ) {
-    const nodeEnv = this.configService.get("NODE_ENV", { infer: true });
+    const nodeEnv = this.configService.get<string>("NODE_ENV");
+    // or const nodeEnv = this.configService.get("NODE_ENV", { infer: true });
     console.log(nodeEnv);
     return this.customerService.create(body);
   }

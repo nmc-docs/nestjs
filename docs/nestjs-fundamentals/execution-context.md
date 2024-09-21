@@ -31,7 +31,7 @@ sidebar_position: 6
 
 - Dưới đây là một ví dụ về việc sử dụng **ArgumentsHost** trong một exception filter để xử lý lỗi HTTP:
 
-```ts
+```ts title="http-exception.filter.ts"
 import {
   ExceptionFilter,
   Catch,
@@ -90,8 +90,7 @@ const className = ctx.getClass().name; // "CatsController"
 
 - Ví dụ dưới đây, ta sẽ tạo một decorator "Roles" nhận vào 1 tham số là mảng string:
 
-```ts
-//roles.decorator.ts
+```ts title="roles.decorator.ts"
 import { Reflector } from "@nestjs/core";
 
 export const Roles = Reflector.createDecorator<string[]>();
@@ -99,8 +98,7 @@ export const Roles = Reflector.createDecorator<string[]>();
 
 - Và giờ ta có thể sử dụng chúng ở trong controller:
 
-```ts
-// cats.controller.ts
+```ts title="cats.controller.ts"
 @Post()
 @Roles(['admin'])
 async create(@Body() createCatDto: CreateCatDto) {
@@ -112,8 +110,7 @@ async create(@Body() createCatDto: CreateCatDto) {
 
 - Để có thể truy cập vào role của route trên, ta sẽ sử dụng **Reflector** class ở trong file guard.
 
-```ts
-//roles.guard.ts
+```ts title="roles.guard.ts"
 @Injectable()
 export class RolesGuard {
   constructor(private reflector: Reflector) {}
@@ -124,8 +121,7 @@ export class RolesGuard {
 
 - Để lấy giá trị của role ở cấp độ method, ta dùng phương thức `get()` với tham số thứ hai là `context.getHandler()`:
 
-```ts
-// roles.guard.ts
+```ts title="roles.guard.ts"
 const roles = this.reflector.get(Roles, context.getHandler());
 ```
 
@@ -133,15 +129,13 @@ const roles = this.reflector.get(Roles, context.getHandler());
 
 - Ở bên trên, ta dùng decorator "Roles" ở cấp độ method, còn nếu dùng ở cấp độ controller như sau, hãy dùng `context.getClass()`:
 
-```ts
-//cats.controller.ts
+```ts title="cats.controller.ts"
 @Roles(["admin"])
 @Controller("cats")
 export class CatsController {}
 ```
 
-```ts
-//roles.guard.ts;
+```ts title="roles.guard.ts"
 const roles = this.reflector.get(Roles, context.getClass());
 ```
 
@@ -149,7 +143,7 @@ const roles = this.reflector.get(Roles, context.getClass());
 
 - Nếu ta dùng decorator "Roles" ở cả cấp độ controller lẫn method như sau:
 
-```ts
+```ts title="cats.controller.ts"
 @Roles(["user"])
 @Controller("cats")
 export class CatsController {
@@ -163,7 +157,7 @@ export class CatsController {
 
 ✏️Trong ví dụ trên, ta muốn role có giá trị "user" là mặc định cho toàn bộ các method trong controller, nhưng với method `create()` thì muốn role là "admin". Lúc này, để lấy giá trị của role, ta dùng:
 
-```ts
+```ts title="roles.guard.ts"
 const roles = this.reflector.getAllAndOverride(Roles, [
   context.getHandler(),
   context.getClass(),
@@ -172,7 +166,7 @@ const roles = this.reflector.getAllAndOverride(Roles, [
 
 ✏️Còn trong trường hợp ta muốn hợp nhất roles ở cả 2 cấp độ:
 
-```ts
+```ts title="roles.guard.ts"
 const roles = this.reflector.getAllAndMerge(Roles, [
   context.getHandler(),
   context.getClass(),
@@ -189,7 +183,7 @@ const roles = this.reflector.getAllAndMerge(Roles, [
 
 - Ví dụ: tạo decorator "Roles" nhận vào tham số là 1 mảng các string
 
-```ts
+```ts title="metadata.ts"
 import { SetMetadata } from "@nestjs/common";
 
 export const Roles = (...roles: string[]) => SetMetadata("roles", roles);
@@ -197,7 +191,7 @@ export const Roles = (...roles: string[]) => SetMetadata("roles", roles);
 
 Sử dụng decorator "Roles" ở bên trong controller:
 
-```ts
+```ts title="cats.controller.ts"
 @Post()
 @Roles('admin')
 async create(@Body() createCatDto: CreateCatDto) {
@@ -207,6 +201,6 @@ async create(@Body() createCatDto: CreateCatDto) {
 
 Cuối cùng, ta có thể lấy giá trị của nó ra trong Guard:
 
-```ts
+```ts title="roles.guard.ts"
 const roles = this.reflector.get<string[]>("roles", context.getHandler());
 ```

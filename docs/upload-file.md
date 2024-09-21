@@ -12,19 +12,9 @@ npm install nestjs-form-data
 
 ## Cấu hình
 
-- Ở file **app.module.ts**:
-
-```ts
-@Module({
-  imports: [NestjsFormDataModule.config({ isGlobal: true })],
-  providers: [{ provide: APP_PIPE, useClass: AppValidationPipe }],
-})
-export class AppModule {}
-```
-
 - File **app-validation-pipe.ts**:
 
-```ts
+```ts title="app-validation-pipe.ts"
 import { Injectable, ValidationPipe } from "@nestjs/common";
 
 @Injectable()
@@ -42,7 +32,7 @@ export class AppValidationPipe extends ValidationPipe {
 
 - Ta tạo DTO và sử dụng các decorator do thư viện cung cấp để validate file:
 
-```ts
+```ts title="change-avatar-body.dto.ts"
 import { ApiProperty } from "@nestjs/swagger";
 import { IsNotEmpty } from "class-validator";
 import {
@@ -70,7 +60,7 @@ export class ChangeAvatarBodyDTO {
 
 - Ta sử dụng decorator **@FormDataRequest()** để có thể lấy được các giá trị từ form data từ body request:
 
-```ts
+```ts title="user.controller.ts"
 import { FormDataRequest } from "nestjs-form-data";
 
 @Controller("user")
@@ -84,6 +74,24 @@ export class UserController {
   }
 }
 ```
+
+## Tạo Module
+
+```ts title="user.module.ts"
+import { NestjsFormDataModule } from "nestjs-form-data";
+
+import { UserController } from "src/modules/apis/user/user.controller";
+import { UserService } from "src/modules/apis/user/user.service";
+
+@Module({
+  imports: [NestjsFormDataModule],
+  controllers: [UserController],
+  providers: [UserService],
+})
+export class UserModule {}
+```
+
+## Kết quả
 
 - Sau khi upload file, avatar sẽ là một object có dạng như sau:
 

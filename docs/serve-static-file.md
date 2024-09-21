@@ -20,7 +20,7 @@ npm install @nestjs/serve-static
 
 - Vào file **nest-cli.json**:
 
-```json
+```json title="nest-cli.json"
 {
   "$schema": "https://json.schemastore.org/nest-cli",
   "collection": "@nestjs/schematics",
@@ -38,7 +38,7 @@ npm install @nestjs/serve-static
 
 - Ở file **app.module.ts**:
 
-```ts
+```ts title="app.module.ts"
 import { Module } from "@nestjs/common";
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";

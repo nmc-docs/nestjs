@@ -94,7 +94,7 @@ new UserService(new AuthService(new DatabaseService()));
 
 - Ví dụ:
 
-```ts
+```ts title="cat.service.ts"
 import { Injectable } from "@nestjs/common";
 import { Cat } from "./interfaces/cat.interface";
 
@@ -110,7 +110,7 @@ export class CatsService {
 
 - Và ta sử dụng CatsService này ở trong CatsController:
 
-```ts
+```ts title="cat.controller.ts"
 import { Controller, Get } from "@nestjs/common";
 import { CatsService } from "./cats.service";
 import { Cat } from "./interfaces/cat.interface";
@@ -128,7 +128,7 @@ export class CatsController {
 
 - Cuối cùng, ta phải "đăng ký" (register) provider CatsService này với Nest IoC Container thông qua providers trong CatsModule:
 
-```ts
+```ts title="cat.module.ts"
 import { Module } from "@nestjs/common";
 import { CatsController } from "./cats/cats.controller";
 import { CatsService } from "./cats/cats.service";

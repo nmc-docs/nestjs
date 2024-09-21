@@ -27,7 +27,7 @@ Trong NestJS, interceptors (bộ chặn) là một công cụ được sử dụ
   - **T**: kiểu của dữ liệu trả về trước khi vào interceptor
   - **R**: kiểu dữ liệu sẽ trả về cho client sau khi được biến đổi bởi interceptor.
 
-```ts
+```ts title="logging.interceptor.ts"
 import {
   Injectable,
   NestInterceptor,
@@ -73,14 +73,14 @@ export class LoggingInterceptor implements NestInterceptor {
 
 ### Áp dụng ở Global
 
-```ts
+```ts title="main.ts"
 const app = await NestFactory.create(AppModule);
 app.useGlobalInterceptors(new LoggingInterceptor());
 ```
 
 - Hoặc ở file AppModule:
 
-```ts
+```ts title="app.module.ts"
 import { Module } from "@nestjs/common";
 import { APP_INTERCEPTOR } from "@nestjs/core";
 
@@ -97,14 +97,14 @@ export class AppModule {}
 
 ### Áp dụng ở Controller
 
-```ts
+```ts title="cats.controller.ts"
 @UseInterceptors(LoggingInterceptor)
 export class CatsController {}
 ```
 
 ### Áp dụng ở Method
 
-```ts
+```ts title="customers.controller.ts"
 @Controller("customers")
 export class CustomersController {
   constructor(private customerService: CustomersService) {}
@@ -126,7 +126,7 @@ export class CustomersController {
 
 - Ví dụ về sử dụng **tap** của RxJS để ghi nhật ký:
 
-```ts
+```ts title="logger.interceptor.ts"
 import {
   CallHandler,
   ExecutionContext,
@@ -164,7 +164,7 @@ Response sent:  {"name":"Nguyen Minh Chi","password":"12345678","email":"minhchi
 
 ### Response Mapping
 
-```ts
+```ts title="transform.interceptor.ts"
 import {
   CallHandler,
   ExecutionContext,
@@ -208,7 +208,7 @@ export class TransformInterceptor<T>
 
 ### Exception mapping
 
-```ts
+```ts title="errors.interceptor.ts"
 import {
   Injectable,
   NestInterceptor,
@@ -235,7 +235,7 @@ export class ErrorsInterceptor implements NestInterceptor {
 
 - Ví dụ sau nếu gửi request mà không nhận lại được phản hồi sau 5s, sẽ throw ra **RequestTimeoutException**
 
-```ts
+```ts title="timeout.interceptor.ts"
 import {
   Injectable,
   NestInterceptor,

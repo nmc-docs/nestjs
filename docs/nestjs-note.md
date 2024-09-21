@@ -59,7 +59,7 @@ export class ExampleService {
 
 ❌KHÔNG NÊN VIẾT KIỂU NÀY:
 
-```ts
+```ts title="redis.service.ts"
 import { Injectable } from "@nestjs/common";
 import { Redis } from "ioredis";
 
@@ -76,7 +76,7 @@ export class RedisService {
 - Khi sử dụng các class của thư viện, ta nên tạo provider riêng và `extends` từ class của thư viện đó.
 - Nếu class của thư viện có tham số khởi tạo mà các tham số này ta chỉ sử dụng một lần duy nhất cho toàn app, ta truyền luôn cấu hình như sau:
 
-```ts
+```ts title="redis.provider.ts"
 import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { Redis } from "ioredis";
@@ -110,7 +110,7 @@ export class RedisProvider extends Redis implements OnModuleInit {
 }
 ```
 
-```ts
+```ts title="redis.service.ts"
 import { Injectable } from "@nestjs/common";
 
 import { ETokenExpiration } from "src/common/constants/common.enum";
@@ -135,7 +135,7 @@ export class RedisService {
 }
 ```
 
-```ts
+```ts title="redis.module.ts"
 import { Module } from "@nestjs/common";
 
 import { RedisProvider } from "src/modules/libs/redis/redis.provider";

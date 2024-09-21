@@ -22,7 +22,7 @@ sidebar_position: 3
 
 - Ví dụ về 1 file controller:
 
-```ts
+```ts title="customers.controller.ts"
 import { Body, Controller, Get, Post } from "@nestjs/common";
 
 import { CustomersService } from "src/modules/customers/customers.service";
@@ -55,7 +55,7 @@ export class CustomersController {
 
 - Sau khi tạo xong controller, ta import nó vào module:
 
-```ts
+```ts title="customers.module.ts"
 @Module({
   controllers: [CustomersController],
   providers: [CustomersService],
@@ -113,7 +113,7 @@ nest g controller modules/customer
 
 - Ví dụ:
 
-```ts
+```ts title="customers.controller.ts"
 import { Body, Controller, Get, Headers, Param, Post } from "@nestjs/common";
 
 import { CustomersService } from "src/modules/customers/customers.service";
@@ -145,7 +145,7 @@ export class CustomersController {
 - Ta có thể custom HTTP Response Status Code thông qua decorator **@HttpCode()**
 - Ví dụ:
 
-```ts
+```ts title="customers.controller.ts"
 import {
   Body,
   Controller,
@@ -176,7 +176,7 @@ export class CustomersController {
 - Ta có thể thêm các key - value trong response trả về của header thông qua decorator **@Header()**
 - Ví dụ:
 
-```ts
+```ts title="customers.controller.ts"
 import { Body, Controller, Get, Header, Param, Post } from "@nestjs/common";
 
 import { CustomersService } from "src/modules/customers/customers.service";

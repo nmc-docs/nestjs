@@ -1,6 +1,7 @@
 ---
 sidebar_position: 6
 ---
+
 # Logger
 
 :::info
@@ -28,11 +29,11 @@ npm install winston nest-winston
 
 - Có 3 options trong cấu hình logger mà ta sẽ hay dùng:
 
-| Options    | Mô tả                                                                                                                                                                                                                                                                                                                                         |
-| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Options    | Mô tả                                                                                                                                                                                                                                                                            |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | level      | - Chỉ định mức độ ưu tiên của các thông báo log. Chỉ những thông báo log có mức độ bằng hoặc cao hơn mức độ này mới được ghi lại. Chỉ nhận 1 trong 7 giá trị như ở bên trên đã giới thiệu.<br />- Ví dụ: `level: 'info'` sẽ ghi lại các thông báo từ `info`, `warn`, và `error`. |
-| format     | - Chỉ định định dạng của các thông báo log trước khi chúng được ghi lại.<br />- Winston cung cấp nhiều định dạng có sẵn như `json`, `simple`, `timestamp`, và `printf`.<br />- Các định dạng có thể được kết hợp lại với nhau bằng cách sử dụng `combine`.                                 |
-| transports | - Xác định nơi các thông báo log sẽ được ghi lại, ví dụ như file, console, HTTP, hay bất kỳ đích đến nào khác.<br />- Một logger có thể có nhiều `transports`, và mỗi `transport` có thể có cấu hình riêng.                                                                                            |
+| format     | - Chỉ định định dạng của các thông báo log trước khi chúng được ghi lại.<br />- Winston cung cấp nhiều định dạng có sẵn như `json`, `simple`, `timestamp`, và `printf`.<br />- Các định dạng có thể được kết hợp lại với nhau bằng cách sử dụng `combine`.                       |
+| transports | - Xác định nơi các thông báo log sẽ được ghi lại, ví dụ như file, console, HTTP, hay bất kỳ đích đến nào khác.<br />- Một logger có thể có nhiều `transports`, và mỗi `transport` có thể có cấu hình riêng.                                                                      |
 
 - Ví dụ về 1 logger options:
 
@@ -76,7 +77,7 @@ const loggerOptions: LoggerOptions = {
   - Như đã nói ở trên, vì theo từng level, chỉ những thông báo log có level bằng hoặc cao hơn level hiện tại sẽ được ghi lại. Ví dụ: `level: "info"` thì sẽ ghi lại cả `error` lẫn `warn`, cho nên ta phải cấu hình lại sao cho level nào thì chỉ ghi log ở level đó thông qua hàm `getProductionLoggerFormat()`. Nếu **error** thì chỉ ghi ra **error.log**, tương tự với **info**, **warn**. Các file này sẽ lưu ở thư mục **logs** (thư mục này nằm ở cấp độ ngoài cùng của app, hay nó nằm cùng cấp với file **package.json**)
 - Tạo file tên **logger.config.ts**:
 
-```ts
+```ts title="logger.config.ts"
 import { createLogger, format, LoggerOptions, transports } from "winston";
 
 const defaultFormat = format.combine(
@@ -137,7 +138,7 @@ export const winstonLogger = createLogger(loggerOptions);
 
 - Ở file **main.ts**:
 
-```ts
+```ts title="main.ts"
 import { NestFactory } from "@nestjs/core";
 import { WinstonModule } from "nest-winston";
 
@@ -156,7 +157,7 @@ bootstrap();
 
 - Cuối cùng, thêm `Logger` vào mảng các **providers** trong file **app.module.ts**:
 
-```ts
+```ts title="app.module.ts"
 import { Logger, Module } from "@nestjs/common";
 
 @Module({
@@ -171,7 +172,7 @@ export class AppModule {}
 
 - Giờ ta có thể ghi log như sau:
 
-```ts
+```ts title="auth.service.ts"
 import {
   BadRequestException,
   Inject,
@@ -193,19 +194,19 @@ export class AuthService {
 
 - Ở lần trước, ta đã tạo một exception filter để catch tất cả các exception được throw ra trong app, giờ ta sẽ kết hợp ghi log (chỉ đối với những lỗi có **statusCode** là **500**):
 
-```ts
+```ts title="all-exceptions.filter.ts"
 import {
   ArgumentsHost,
   Catch,
   ExceptionFilter,
   HttpException,
   HttpStatus,
-  Logger
-} from '@nestjs/common';
-import { plainToInstance } from 'class-transformer';
-import { Request, Response } from 'express';
+  Logger,
+} from "@nestjs/common";
+import { plainToInstance } from "class-transformer";
+import { Request, Response } from "express";
 
-import { ExceptionResponse } from 'src/common/dto/ExceptionResponse.dto';
+import { ExceptionResponse } from "src/common/dto/ExceptionResponse.dto";
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
@@ -226,11 +227,11 @@ export class AllExceptionsFilter implements ExceptionFilter {
     exception: HttpException | Error
   ): void {
     let statusCode: number = HttpStatus.INTERNAL_SERVER_ERROR;
-    let message: string = 'Internal server error';
+    let message: string = "Internal server error";
     let responseBody: any = {
       statusCode,
       message,
-      path: request.url
+      path: request.url,
     };
 
     if (exception instanceof HttpException) {
@@ -240,20 +241,20 @@ export class AllExceptionsFilter implements ExceptionFilter {
           exception.getResponse() as any
         )?.message;
         message = Array.isArray(exceptionResponseMessage)
-          ? exceptionResponseMessage.join(', ')
-          : exceptionResponseMessage || 'Unknown error message';
+          ? exceptionResponseMessage.join(", ")
+          : exceptionResponseMessage || "Unknown error message";
 
         responseBody = {
           ...responseBody,
           ...(exception.getResponse() as object),
           message,
-          statusCode
+          statusCode,
         };
       }
     }
 
     responseBody = plainToInstance(ExceptionResponse, responseBody, {
-      excludeExtraneousValues: true
+      excludeExtraneousValues: true,
     });
 
     response.status(statusCode).json(responseBody);
@@ -267,12 +268,13 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     if (statusCode === HttpStatus.INTERNAL_SERVER_ERROR) {
       this.logger.error(
-        `${request.method} ${request.url} - ${statusCode} - ${exception.stack?.toString()}`
+        `${request.method} ${
+          request.url
+        } - ${statusCode} - ${exception.stack?.toString()}`
       );
     }
   }
 }
-
 ```
 
 ## Kết quả

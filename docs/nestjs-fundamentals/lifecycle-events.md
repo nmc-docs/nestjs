@@ -24,7 +24,7 @@ sidebar_position: 11
 
 - Sau đây là một ví dụ với **onModuleInit()**:
 
-```ts
+```ts title="users.service.ts"
 import { Injectable, OnModuleInit } from "@nestjs/common";
 
 @Injectable()

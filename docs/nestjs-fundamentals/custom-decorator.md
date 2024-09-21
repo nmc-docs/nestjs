@@ -17,7 +17,7 @@ sidebar_position: 10
 
 - Ở ví dụ dưới đây, ta sẽ tạo decorator @User để truy cập thông tin user ở trong request:
 
-```ts
+```ts title="user.decorator.ts"
 import { createParamDecorator, ExecutionContext } from "@nestjs/common";
 
 export const User = createParamDecorator(
@@ -47,7 +47,7 @@ async findOne(@User() user: UserEntity) {
 
 - Ở dưới đây, ta tạo decorator nhận vào 1 tham số là key của object cần lấy ra, nếu không truyền key vào, trả về toàn bộ object:
 
-```ts
+```ts title="user.decorator.ts"
 import { createParamDecorator, ExecutionContext } from "@nestjs/common";
 
 export const User = createParamDecorator(
@@ -71,7 +71,7 @@ async findOne(@User('firstName') firstName: string) {
 
 - Ta có thể tạo một decorator trong đó gộp nhiều decorator khác lại với nhau thông qua **applyDecorators()** như sau:
 
-```ts
+```ts title="auth.decorator.ts"
 import { applyDecorators } from "@nestjs/common";
 
 export function Auth(...roles: Role[]) {

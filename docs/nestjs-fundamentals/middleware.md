@@ -20,7 +20,7 @@ sidebar_position: 8
 
 ## Tạo middleware
 
-```ts
+```ts title="logger.middleware.ts"
 import { Injectable, NestMiddleware } from "@nestjs/common";
 import { Request, Response, NextFunction } from "express";
 
@@ -37,7 +37,7 @@ export class LoggerMiddleware implements NestMiddleware {
 
 - Ta apply middleware bên trong module như sau:
 
-```ts
+```ts title="app.module.ts"
 import { Module, NestModule, MiddlewareConsumer } from "@nestjs/common";
 import { LoggerMiddleware } from "./common/middleware/logger.middleware";
 import { CatsModule } from "./cats/cats.module";
@@ -52,7 +52,7 @@ export class AppModule implements NestModule {
 }
 ```
 
-```ts
+```ts title="app.module.ts"
 import { Module, NestModule, MiddlewareConsumer } from "@nestjs/common";
 import { LoggerMiddleware } from "./common/middleware/logger.middleware";
 import { CatsModule } from "./cats/cats.module";
@@ -72,7 +72,7 @@ export class AppModule implements NestModule {
 
 - Để apply middleware cho các route và với các method nhất định:
 
-```ts
+```ts title="app.module.ts"
 import {
   Module,
   NestModule,

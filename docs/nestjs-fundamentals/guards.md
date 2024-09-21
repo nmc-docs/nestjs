@@ -17,8 +17,7 @@ Guard trong NestJS là một tính năng quan trọng được sử dụng để
 
 ## Tạo Guard
 
-```ts
-//auth.guard.ts
+```ts title="auth.guard.ts"
 import { CanActivate, ExecutionContext, Injectable } from "@nestjs/common";
 
 @Injectable()
@@ -55,14 +54,14 @@ throw new UnauthorizedException();
 
 ### Cấp độ Global
 
-```ts
+```ts title="main.ts"
 const app = await NestFactory.create(AppModule);
 app.useGlobalGuards(new RolesGuard());
 ```
 
 - Hoặc sử dụng global ở trong AppModule:
 
-```ts
+```ts title="app.module.ts"
 @Module({
   controllers: [],
   providers: [
@@ -77,7 +76,7 @@ export class AppModule {}
 
 ### Cấp độ Controller
 
-```ts
+```ts title="cats.controller.ts"
 @Controller("cats")
 @UseGuards(new RolesGuard())
 export class CatsController {}
@@ -85,7 +84,7 @@ export class CatsController {}
 
 ### Cấp độ method
 
-```ts
+```ts title="cats.controller.ts"
 @Controller("cats")
 export class CatsController {
   @UseGuards(new RolesGuard())
@@ -97,7 +96,7 @@ export class CatsController {
 
 - Ở bài trước, ta đã sử dụng [Reflector.createDecorator()](./execution-context#reflectorcreatedecorator) để tạo một decorator "Roles", giờ chúng ta có thể lấy giá trị của nó ra trong guard để có thể thực hiện việc xác thực roles cho request.
 
-```ts
+```ts title="roles.guard.ts"
 import { Injectable, CanActivate, ExecutionContext } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import { Roles } from "./roles.decorator";

@@ -26,7 +26,7 @@ Plugin Swagger sẽ tự động:
 
 - Để thiết lập Swagger Plugin, vào file **nest-cli.json** và thêm plugin như sau:
 
-```json
+```json title="nest-cli.json"
 {
   "collection": "@nestjs/schematics",
   "sourceRoot": "src",
@@ -56,7 +56,7 @@ Plugin Swagger sẽ tự động:
 
 - Dưới đây là so sánh khi ta không dùng và dùng Swagger Plugin:
 
-```ts
+```ts title="create-user.dto.ts"
 export class CreateUserDto {
   @ApiProperty()
   email: string;
@@ -72,7 +72,7 @@ export class CreateUserDto {
 }
 ```
 
-```ts
+```ts title="create-user.dto.ts"
 export class CreateUserDto {
   email: string;
   password: string;
@@ -91,7 +91,7 @@ export class CreateUserDto {
 
 - Tạo file **swagger.config.ts**:
 
-```ts
+```ts title="swagger.config.ts"
 import { DocumentBuilder, SwaggerCustomOptions } from "@nestjs/swagger";
 
 export const swaggerConfig = new DocumentBuilder()
@@ -120,7 +120,7 @@ export const swaggerOptions: SwaggerCustomOptions = {
 
 - Cuối cùng, ở file **main.ts**:
 
-```ts
+```ts title="main.ts"
 import { Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { NestFactory } from "@nestjs/core";
