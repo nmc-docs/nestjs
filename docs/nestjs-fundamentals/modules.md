@@ -25,7 +25,8 @@ sidebar_position: 2
 - Một module sẽ không resolve những provider nằm ngoài phạm vi của nó.
 - Một provider được module resolve nếu:
   - Nó được truyền vào mảng **providers** khi cấu hình module,
-  - Nó được export từ một module khác và module khác này phải được import vào module hiện tại.
+  - Nó được export từ một module khác và module khác này phải được import vào module hiện tại. [Xem chi tiết](#importexport)
+  - Nó thuộc một [Global module](#global-module)
 - Khi một service được truyền vào mảng **providers** của một module mà service này sử dụng các thành phần phụ thuộc khác (tham số truyền vào constructor) thì các thành phần phụ thuộc đó cũng phải được resolve bởi module
 
 :::
@@ -305,7 +306,7 @@ import {
 
 @Module({})
 export class RedisModule {
-  static forRootAsync(options: IRedisModuleAsyncOptions): DynamicModule {
+  static registerAsync(options: IRedisModuleAsyncOptions): DynamicModule {
     const defaultFactory = (...args: any[]) => null;
     return {
       module: RedisModule,
@@ -323,7 +324,7 @@ export class RedisModule {
     };
   }
 
-  static forRoot(options: IRedisModuleOptions): DynamicModule {
+  static register(options: IRedisModuleOptions): DynamicModule {
     return {
       module: RedisModule,
       providers: [
@@ -371,27 +372,25 @@ export class RedisService extends Redis implements OnModuleInit {
 }
 ```
 
-- Sau đó, ở app.module.ts:
+- Sau đó, ở các module mà ta muốn sử dụng RedisModule:
 
 ```ts
 @Module({
   imports: [
-    RedisModule.forRoot({
-      isGlobal: true,
+    RedisModule.register({
       host: "localhost",
       port: 6379,
       password: "ptit_150920022",
     }),
   ],
 })
-export class AppModule {}
+export class AuthModule {}
 ```
 
 ```ts
 @Module({
   imports: [
-    RedisModule.forRootAsync({
-      isGlobal: true,
+    RedisModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService<IEnvironmentVariables>) => ({
         host: configService.get<string>("REDIS_HOST"),
@@ -402,7 +401,7 @@ export class AppModule {}
     }),
   ],
 })
-export class AppModule {}
+export class OrdersModule {}
 ```
 
 ## Global module

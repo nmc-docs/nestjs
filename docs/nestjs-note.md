@@ -27,70 +27,6 @@ sidebar_position: 99
 
 :::note
 
-❌KHÔNG NÊN VIẾT KIỂU NÀY:
-
-```ts
-import { Injectable } from "@nestjs/common";
-import { Redis } from "ioredis";
-
-@Injectable()
-export class RedisService {
-  private redis: Redis;
-
-  constructor() {
-    this.redis = new Redis();
-  }
-}
-```
-
-✅NÊN VIẾT NHƯ NÀY: tạo thành một service mới để dễ quản lý, sau đó bỏ hết vào một module.
-
-```ts
-import { Inject, Injectable, Logger, OnModuleInit } from "@nestjs/common";
-import { Redis, RedisOptions } from "ioredis";
-
-import { EProviderKey } from "src/common/constants/provider-key.constant";
-
-@Injectable()
-export class RedisProvider extends Redis {
-  //Ta được viết như này bởi vì logger này là một constant và chỉ áp dụng cho riêng service RedisProvider
-  private readonly logger = new Logger(RedisProvider.name);
-
-  constructor(@Inject(EProviderKey.REDIS_OPTIONS) options: RedisOptions) {
-    super(options);
-  }
-
-  async onModuleInit() {
-    try {
-      const redisInfo = await this.info();
-      await this.config("SET", "notify-keyspace-events", "KEA");
-      this.logger.log("🚀 Connect to Redis successfully!");
-    } catch (error) {
-      this.disconnect();
-      throw new Error(
-        `❌ Connect to Redis failed: ${(error as Error).message}`
-      );
-    }
-  }
-}
-```
-
-```ts
-import { Injectable } from "@nestjs/common";
-import { Redis } from "ioredis";
-
-@Injectable()
-export class RedisService {
-  constructor(private redis: RedisProvider) {}
-}
-```
-
-:::
-
-## 4
-
-:::note
-
 ```ts
 import { Injectable } from "@nestjs/common";
 
@@ -117,72 +53,101 @@ export class ExampleService {
 
 :::
 
-## 5
+## 4
 
 :::note
 
-- Khi sử dụng các class của thư viện, ta nên tạo provider riêng và `extends` từ class của thư viện đó.
-- Nếu class của thư viện có tham số khởi tạo thì ta nên tạo dynamic module, tạo các hàm static như `forRoot`, `register`,... để nhận cấu hình. Sau đó, tạo thêm provider sử dụng `useValue` hoặc `useFactory` để nhận giá trị cấu hình này. Việc còn lại là từ class extends kia, ta inject provider chứa tham số cấu hình vào và sử dụng `super()` để khởi tạo.
+❌KHÔNG NÊN VIẾT KIỂU NÀY:
 
 ```ts
-import { RedisOptions } from "ioredis";
+import { Injectable } from "@nestjs/common";
+import { Redis } from "ioredis";
 
-export interface IRedisModuleAsyncOptions {
-  imports?: any[];
-  useFactory?: (...args: any[]) => Promise<RedisOptions> | RedisOptions;
-  inject?: any[];
-  isGlobal?: boolean;
-}
-
-export interface IRedisModuleOptions extends RedisOptions {
-  isGlobal?: boolean;
-}
-```
-
-```ts
-@Module({})
-export class RedisModule {
-  static forRootAsync(options: IRedisModuleAsyncOptions): DynamicModule {
-    const defaultFactory = (...args: any[]) => null;
-    return {
-      module: RedisModule,
-      imports: options.imports || [],
-      providers: [
-        RedisProvider,
-        RedisService,
-        {
-          provide: EProviderKey.REDIS_OPTIONS,
-          useFactory: options.useFactory || defaultFactory,
-          inject: options.inject || [],
-        },
-      ],
-      exports: [RedisService],
-      global: options.isGlobal ?? false,
-    };
-  }
-
-  static forRoot(options: IRedisModuleOptions): DynamicModule {
-    return {
-      module: RedisModule,
-      providers: [
-        RedisProvider,
-        RedisService,
-        { provide: EProviderKey.REDIS_OPTIONS, useValue: options },
-      ],
-      exports: [RedisService],
-      global: options.isGlobal ?? false,
-    };
-  }
-}
-```
-
-```ts
 @Injectable()
-export class RedisProvider extends Redis {
-  constructor(@Inject(EProviderKey.REDIS_OPTIONS) options: RedisOptions) {
-    super(options);
+export class RedisService {
+  private redis: Redis;
+
+  constructor() {
+    this.redis = new Redis();
   }
 }
 ```
+
+- Khi sử dụng các class của thư viện, ta nên tạo provider riêng và `extends` từ class của thư viện đó.
+- Nếu class của thư viện có tham số khởi tạo mà các tham số này ta chỉ sử dụng một lần duy nhất cho toàn app, ta truyền luôn cấu hình như sau:
+
+```ts
+import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { Redis } from "ioredis";
+
+import { IEnvironmentVariables } from "src/common/types/env.type";
+
+@Injectable()
+export class RedisProvider extends Redis implements OnModuleInit {
+  private readonly logger = new Logger(RedisProvider.name);
+
+  constructor(private configService: ConfigService<IEnvironmentVariables>) {
+    super({
+      host: configService.get<string>("REDIS_HOST"),
+      port: configService.get<number>("REDIS_PORT"),
+      password: configService.get<string>("REDIS_PASSWORD"),
+    });
+  }
+
+  async onModuleInit() {
+    try {
+      const redisInfo = await this.info();
+      await this.config("SET", "notify-keyspace-events", "KEA");
+      this.logger.log("🚀 Connect to Redis successfully!");
+    } catch (error) {
+      this.disconnect();
+      throw new Error(
+        `❌ Connect to Redis failed: ${(error as Error).message}`
+      );
+    }
+  }
+}
+```
+
+```ts
+import { Injectable } from "@nestjs/common";
+
+import { ETokenExpiration } from "src/common/constants/common.enum";
+import { RedisProvider } from "src/modules/libs/redis/redis.provider";
+
+@Injectable()
+export class RedisService {
+  constructor(private redis: RedisProvider) {}
+
+  setFilePublicId = async (encodeURL: string, publicId: string) => {
+    await this.redis.set(`file_public_id:${encodeURL}`, publicId);
+  };
+
+  getFilePublicId = async (encodeURL: string) => {
+    const publicId = await this.redis.get(`file_public_id:${encodeURL}`);
+    return publicId;
+  };
+
+  deleteFilePublicId = async (encodeURL: string) => {
+    await this.redis.del(`file_public_id:${encodeURL}`);
+  };
+}
+```
+
+```ts
+import { Module } from "@nestjs/common";
+
+import { RedisProvider } from "src/modules/libs/redis/redis.provider";
+import { RedisService } from "src/modules/libs/redis/redis.service";
+
+@Module({
+  providers: [RedisProvider, RedisService],
+  exports: [RedisService],
+})
+export class RedisModule {}
+```
+
+- Nếu class của thư viện có tham số khởi tạo mà các tham số này ta sử dụng mỗi module một khác, hãy tạo dynamic module như ở [ví dụ này](./nestjs-fundamentals/modules#ví-dụ-dynamic-module-redismodule)
 
 :::
