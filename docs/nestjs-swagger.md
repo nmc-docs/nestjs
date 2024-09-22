@@ -167,6 +167,8 @@ bootstrap();
 - Cú pháp:
 
 ```ts
+import { ApiTags } from '@nestjs/swagger';
+
 // Phạm vi sử dụng: đầu "controller"
 @ApiTags(name: string)
 ```
@@ -177,6 +179,8 @@ bootstrap();
 - Cú pháp:
 
 ```ts
+import { ApiResponse } from '@nestjs/swagger';
+
 // Phạm vi sử dụng: đầu "controller" hoặc đầu mỗi "method"
 @ApiResponse(options: ApiResponseOptions)
 ```
@@ -232,6 +236,8 @@ bootstrap();
 - Cú pháp:
 
 ```ts
+import { ApiBody } from '@nestjs/swagger';
+
 // Phạm vi sử dụng: đầu mỗi "method"
 @ApiBody(options: ApiBodyOptions)
 ```
@@ -267,6 +273,8 @@ createUser(@Body() createUserDto: CreateUserDto) {
 - Cú pháp:
 
 ```ts
+import { ApiParam } from '@nestjs/swagger';
+
 // Phạm vi áp dụng: ở đầu mỗi "method"
 @ApiParam(option: ApiParamOptions)
 ```
@@ -332,6 +340,8 @@ export class UserController {
 - Cú pháp:
 
 ```ts
+import { ApiQuery } from '@nestjs/swagger';
+
 // Phạm vi áp dụng: ở đầu mỗi "method"
 @ApiQuery(option: ApiQueryOptions)
 ```
@@ -384,27 +394,29 @@ export class ItemController {
 }
 ```
 
-### `@ApiHeader()`
+### `@ApiHeader()` / `@ApiHeaders()`
 
 - Được sử dụng để mô tả các **header parameters** (tham số trong phần header) mà một API endpoint yêu cầu. Những tham số này có thể bao gồm các giá trị như token, API key, hoặc các thông tin khác được gửi trong phần header của yêu cầu HTTP.
 - Cú pháp:
 
 ```ts
+import { ApiHeader, ApiHeaders } from '@nestjs/swagger';
+
 // Phạm vi áp dụng: ở đầu "controller" hoặc đầu mỗi "method"
 @ApiHeader(option: ApiHeaderOptions)
+@ApiHeader(option: ApiHeaderOptions[])
 ```
 
-| ApiHeaderOptions  | Kiểu dữ liệu | Mô tả                                                                 |
-| ----------------- | ------------ | --------------------------------------------------------------------- |
-| `name`            | `string`     | Tên key header                                                        |
-| `type`            | `string`     | Kiểu dữ liệu của key header (`"string"`, `"number"`, `"boolean"`,...) |
-| `description`     | `string`     | Mô tả cho key header                                                  |
-| `required`        | `boolean`    | Xác định key header có bắt buộc hay không                             |
-| `allowEmptyValue` | `boolean`    | Xác định có cho phép key header nhận giá trị rỗng hay không           |
-| `enum`            | `enum`       | Định nghĩa enum cho giá trị của key header                            |
-| `example`         | `any`        | Mô tả giá trị ví dụ cụ thể cho key header                             |
+| ApiHeaderOptions  | Kiểu dữ liệu | Mô tả                                                       |
+| ----------------- | ------------ | ----------------------------------------------------------- |
+| `name`            | `string`     | Tên key header                                              |
+| `description`     | `string`     | Mô tả cho key header                                        |
+| `required`        | `boolean`    | Xác định key header có bắt buộc hay không                   |
+| `allowEmptyValue` | `boolean`    | Xác định có cho phép key header nhận giá trị rỗng hay không |
+| `enum`            | `enum`       | Định nghĩa enum cho giá trị của key header                  |
+| `example`         | `any`        | Mô tả giá trị ví dụ cụ thể cho key header                   |
 
-- Ví dụ:
+- Ví dụ về `@ApiHeader()`:
 
 ```ts
 @Controller("orders")
@@ -429,6 +441,33 @@ export class OrderController {
 }
 ```
 
+- Ví dụ về `@ApiHeaders()`:
+
+```ts
+@Controller("orders")
+export class OrderController {
+  @Get()
+  @ApiHeaders([
+    {
+      name: "Authorization",
+      description: "Token xác thực người dùng",
+      required: true,
+    },
+    {
+      name: "Client-Id",
+      description: "ID của client thực hiện yêu cầu",
+      required: true,
+    },
+  ])
+  getOrders(
+    @Headers("Authorization") authToken: string,
+    @Headers("Client-Id") clientId: string
+  ) {
+    return `Danh sách đơn hàng cho client ${clientId} với token: ${authToken}`;
+  }
+}
+```
+
 ### `@ApiBearerAuth()`
 
 - Được sử dụng để định nghĩa và mô tả phương thức xác thực **Bearer Authentication** cho một hoặc nhiều API endpoints. Bearer Authentication là một phương thức xác thực mà trong đó, một **token** (thường là JWT - JSON Web Token) được gửi trong header của các yêu cầu HTTP, cụ thể trong header `Authorization` dưới dạng:
@@ -440,6 +479,8 @@ Authorization: Bearer <token>
 - Cú pháp:
 
 ```ts
+import { ApiBearerAuth } from '@nestjs/swagger';
+
 // Phạm vi sử dụng: ở đầu "controller" hoặc đầu mỗi "method"
 @ApiBearerAuth()
 ```
@@ -477,6 +518,8 @@ export const swaggerConfig = new DocumentBuilder()
 - Cú pháp:
 
 ```ts
+import { ApiProperty } from '@nestjs/swagger';
+
 // Phạm vi sử dụng: ở đầu của thuộc tính trong class DTO
 @ApiProperty(options?: ApiPropertyOptions)
 ```
@@ -506,6 +549,8 @@ export const swaggerConfig = new DocumentBuilder()
 - Cú pháp:
 
 ```ts
+import { ApiConsumes } from '@nestjs/swagger';
+
 // Phạm vi sử dụng: ở đầu "controller" hoặc đầu mỗi "method"
 @ApiConsumes('application/json')
 @ApiConsumes('multipart/form-data') // Áp dụng cho form data được gửi lên từ client

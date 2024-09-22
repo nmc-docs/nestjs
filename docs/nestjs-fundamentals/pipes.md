@@ -198,12 +198,14 @@ export class CustomersController {
 
 - Dưới đây là một số options khi khởi tạo **ValidationPipe**:
 
-| Option              | Kiểu dữ liệu | Mô tả                                                                                                                                         |
-| ------------------- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| whitelist           | boolean      | Nếu là "true", các thuộc tính không được đính decorator của class-validator sẽ bị loại bỏ. Giá trị mặc định là "false"                        |
-| errorHttpStatusCode | number       | Response HTTP Status Code. Giá trị mặc định là 400                                                                                            |
-| exceptionFactory    | Function     | Là một hàm nhận tham số là một validation errors và return một exception. Dùng khi ta muốn custom lỗi trả vè cho client khi validate thất bại |
-| stopAtFirstError    | boolean      | Nếu là "true", sẽ dừng lại khi validate thất bại ở thuộc tính đầu tiên. Mặc định là "false"                                                   |
+| Option                     | Kiểu dữ liệu | Mô tả                                                                                                                                                                                                                                                                                                                         |
+| -------------------------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `whitelist`                | `boolean`    | Nếu là `true`, các thuộc tính không được đính decorator của class-validator sẽ bị loại bỏ. Giá trị mặc định là `false`                                                                                                                                                                                                        |
+| `transform`                | `boolean`    | Nếu là `true`, sẽ biến đổi dữ liệu trước khi validate dựa vào các decorator của thư viện class-transformer                                                                                                                                                                                                                    |
+| `validateCustomDecorators` | `boolean`    | Khi bạn đặt `validateCustomDecorators: true`, `ValidationPipe` sẽ không chỉ kiểm tra các decorator chuẩn được cung cấp bởi `class-validator` (như `@IsString()`, `@IsInt()`, v.v.), mà còn kiểm tra các decorator tùy chỉnh mà bạn đã tạo, nhằm mở rộng hoặc bổ sung các quy tắc kiểm tra cho các DTO hoặc đối tượng của bạn. |
+| `errorHttpStatusCode`      | `number`     | Response HTTP Status Code. Giá trị mặc định là 400                                                                                                                                                                                                                                                                            |
+| `exceptionFactory`         | `Function`   | Là một hàm nhận tham số là một validation errors và return một exception. Dùng khi ta muốn custom lỗi trả vè cho client khi validate thất bại                                                                                                                                                                                 |
+| `stopAtFirstError`         | `boolean`    | Nếu là `true`, sẽ dừng lại khi validate thất bại ở thuộc tính đầu tiên. Mặc định là `false`                                                                                                                                                                                                                                   |
 
 ## Các cấp độ sử dụng Pipe
 
@@ -212,7 +214,7 @@ export class CustomersController {
   - Cấp độ controller: Xác thực dữ liệu đầu vào của tất cả các endpoint trong controller.
   - Cấp độ method: Xác thực dữ liệu đầu vào của một endpoint nhất định trong controller.
   - Cấp độ parameter: Xác thực dữ liệu theo params ở trong 1 method cụ thể trong controller, nếu chỉ định ở body, chỉ validate ở body, tương tự với query.
-- Trong 4 cấp độ trên, 3 cấp độ đầu sẽ validate dữ liệu cho cả BODY + QUERY nếu chúng được định nghĩa bằng class và sử dụng các decorator của thư viện class validator.
+- Trong 4 cấp độ trên, 3 cấp độ đầu sẽ validate dữ liệu cho cả **BODY + QUERY** nếu chúng được định nghĩa bằng class và sử dụng các decorator của thư viện class validator.
 - Ví dụ cho 4 cấp độ:
 
 ### Cấp độ Global
@@ -238,7 +240,7 @@ bootstrap();
   providers: [
     {
       provide: APP_PIPE,
-      useClass: RequestValidationPipe,
+      useClass: ValidationPipe,
     },
   ],
 })
@@ -395,7 +397,82 @@ export class ValidationPipe implements PipeTransform<any> {
 }
 ```
 
+## Validate request header
+
+- Như đã nói ở trên, `ValidationPipe()` không hỗ trợ việc validate request header thông qua decorator `@Header()`, do đó, ta phải tự tạo [custom decorator](./custom-decorator) để validate nó.
+
+- Tạo decorator **RequestHeader**:
+
+```ts title="request-header.decorator.ts"
+import { createParamDecorator, ExecutionContext } from "@nestjs/common";
+import { plainToInstance } from "class-transformer";
+
+export const RequestHeader = createParamDecorator(
+  async (targetDTO: any, ctx: ExecutionContext) => {
+    const headers = ctx.switchToHttp().getRequest().headers;
+    const headersInstance = plainToInstance(targetDTO, headers);
+    return headersInstance;
+  }
+);
+```
+
+- Tạo một DTO định nghĩa các thuộc tính bên trong header:
+
+```ts title="RefreshTokenHeader.dto.ts"
+import { Expose, Type } from "class-transformer";
+import { IsNotEmpty, IsNumber, IsString } from "class-validator";
+
+import { Trim } from "src/common/decorators/sanitizer/trim.sanitizer";
+
+enum EHeaderKey {
+  REFRESH_TOKEN = "refresh-token",
+  TWO_FACTOR_AUTH_SECRET_KEY = "two-factor-auth-secret-key",
+}
+
+export class RefreshTokenHeaderDTO {
+  @Expose({ name: EHeaderKey.REFRESH_TOKEN })
+  @Trim()
+  @IsString()
+  @IsNotEmpty()
+  refreshToken: string;
+
+  @Expose({ name: EHeaderKey.TWO_FACTOR_AUTH_SECRET_KEY })
+  @IsNotEmpty()
+  @IsNumber()
+  @Type(() => Number)
+  twoFactorAuthSecretKey: number;
+}
+```
+
 :::note
+
+- Ta phải sử dụng `@Expose()` để có thể biến đổi tên key từ header ta truyền vào và gán vào thuộc tính ta định nghĩa bên trong class DTO.
+  :::
+
+- Và cuối cùng ta có thể sử dụng `@RequestHeader()` trong controller:
+
+```ts
+import { RequestHeader } from 'src/common/decorators/request-header.decorator';
+
+@Post('refresh-token')
+async refreshToken(
+  @RequestHeader(
+    new ValidationPipe({
+      validateCustomDecorators: true, // Remember to add this option
+      transform: true, // Remember to add this option
+      stopAtFirstError: true
+    })
+  )
+  header: RefreshTokenHeaderDTO
+): Promise<RefreshTokenResponseTO> {
+  console.log('Header:', header);
+
+  console.log('Header refresh token:', header.refreshToken);
+  console.log('Header two factor key:', header.twoFactorAuthSecretKey);
+}
+```
+
+:::tip
 
 - Giống như controller, ta có thể **inject dependencies** khác vào pipe thông qua **constructor()**
 
