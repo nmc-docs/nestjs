@@ -6,7 +6,7 @@ sidebar_position: 5
 
 - Trước đó, ta đã biết tạo 1 [Catch All Exception Filter](./nestjs-fundamentals/exception-filters#catch-all-exception), giờ ta sẽ tạo nó để xử lý tất cả các exception được throw ra trong app một cách có hiệu quả.
 - Exception filter ta sẽ tạo dưới đây sẽ:
-  - Trả về error cho client gồm 3 trường: **statusCode**, **message**, **path**.
+  - Trả về error cho client gồm 3 trường cố định: **statusCode**, **message**, **path**. và có thể có thêm các trường tùy chỉnh khác.
   - Nếu mã lỗi trả về là 500, thì sẽ trả về cho client có dạng sau, và ở server sẽ log ra chi tiết lỗi đó:
 
 ```json
@@ -17,12 +17,12 @@ sidebar_position: 5
 }
 ```
 
-- Đầu tiên, tạo **ExceptionResponse.dto.ts**:
+- Đầu tiên, tạo **BaseExceptionResponse.dto.ts**:
 
-```ts title="exception-response.dto.ts"
+```ts title="BaseExceptionResponse.dto.ts"
 import { Expose } from "class-transformer";
 
-export class ExceptionResponse {
+export class BaseExceptionResponse {
   @Expose()
   statusCode: number;
 
@@ -48,19 +48,16 @@ import {
 import { plainToInstance } from "class-transformer";
 import { Request, Response } from "express";
 
-import { ExceptionResponse } from "src/common/dto/ExceptionResponse.dto";
+import { BaseExceptionResponse } from "src/common/dto/BaseExceptionResponse.dto";
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
-  private readonly logger = new Logger(AllExceptionsFilter.name);
-
   catch(exception: HttpException | Error, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
 
     this.handleResponse(request, response, exception);
-    this.handleLogger(request, exception);
   }
 
   private handleResponse(
@@ -70,7 +67,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
   ): void {
     let statusCode: number = HttpStatus.INTERNAL_SERVER_ERROR;
     let message: string = "Internal server error";
-    let responseBody: any = {
+    let responseBody: BaseExceptionResponse = {
       statusCode,
       message,
       path: request.url,
@@ -86,18 +83,20 @@ export class AllExceptionsFilter implements ExceptionFilter {
           ? exceptionResponseMessage.join(", ")
           : exceptionResponseMessage || "Unknown error message";
 
+        /* 
+        - Lấy ra các error fields khác mà ta đã thêm vào khi throw exception
+        - Ví dụ: khi ta throw new BadRequestException({ errorType: 'INVALID_CREDENTIALS', message: 'Invalid email' }) thì extraErrorFields = { errorType: 'INVALID_CREDENTIALS', message: 'Invalid email' }
+        */
+        const { error, ...extraErrorFields } = exception.getResponse() as any;
+
         responseBody = {
           ...responseBody,
-          ...(exception.getResponse() as object),
+          ...extraErrorFields,
           message,
           statusCode,
         };
       }
     }
-
-    responseBody = plainToInstance(ExceptionResponse, responseBody, {
-      excludeExtraneousValues: true,
-    });
 
     response.status(statusCode).json(responseBody);
   }
@@ -114,3 +113,25 @@ import { APP_FILTER } from "@nestjs/core";
 })
 export class AppModule {}
 ```
+
+:::caution
+
+- Nếu truyền 1 object khi throw exception (hoặc custom exception). Hãy nhớ luôn thêm trường "message". Điều này là bắt buộc.
+
+```ts
+// ❌ Không hợp lệ
+throw new BadRequestException({
+  errorType: ELoginExceptionErrorType.INVALID_2FA_OTP,
+});
+
+// ✅ Hợp lệ
+throw new BadRequestException({
+  message: "Two factor authenticator code is invalid",
+  errorType: ELoginExceptionErrorType.INVALID_2FA_OTP,
+});
+
+// ✅ Hợp lệ bởi vì truyền 1 string thì NestJS tự gán nó là thuộc tính "message"
+throw new BadRequestException("Two factor authenticator code is invalid");
+```
+
+:::

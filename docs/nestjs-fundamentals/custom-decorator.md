@@ -6,8 +6,8 @@ sidebar_position: 10
 
 :::info
 
-- Ở các mục trước, ta đã tạo một decorator @Roles() để tạo metadata là quyền truy cập như "user" hay "admin".
-- Ở bài này, ta sẽ tìm hiểu cách tạo 1 decorator, cho phép truy cập vào request object,...
+- Ở đợt trước, ta đã sử dụng `Reflector.createDecorator()` và `SetMetadata()` tạo một decorator để đính kèm metatdata. Xem chi tiết [tại đây](./execution-context#reflection-và-metadata)
+- Ở bài này, ta sẽ tìm hiểu cách tạo 1 decorator. Khác với đợt trước, decorator lần này có thể truy cập vào các thuộc tính của request thông qua [ExecutionContext](./execution-context#executioncontext-class)
 
 :::
 
@@ -30,7 +30,7 @@ export const User = createParamDecorator(
 
 :::info
 
-- Ở bên trên, phương thức createParamDecorator() nhận vào 2 tham số là: data (tham số truyền vào khi gọi decorator), tham số thứ hai là [ExecutionContext ](./execution-context#executioncontext-class)để có thể truy cập vào request object.
+- Ở bên trên, phương thức `createParamDecorator()` nhận vào 2 tham số là: data (tham số truyền vào khi gọi decorator), tham số thứ hai là [ExecutionContext](./execution-context#executioncontext-class) để có thể truy cập vào request object.
 
 :::
 

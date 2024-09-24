@@ -6,7 +6,7 @@ sidebar_position: 5
 
 :::info
 
-- NestJS cung cấp cho ta một lớp gọi là **HttpException** và các lớp con kế thừa từ nó để xử lý exception được throw ra từ ứng dụng.
+- NestJS cung cấp cho ta một lớp gọi là **HttpException** và các lớp con kế thừa từ nó để throw lỗi ra từ ứng dụng.
 - Một số built-in exception trong NestJS:
   - BadRequestException
   - UnauthorizedException
@@ -38,7 +38,8 @@ sidebar_position: 5
 ```ts
 @Post('register')
 async register() {
-  throw new BadRequestException('Email already exists');
+  throw new HttpException('Email already exists', HttpStatus.BAD_REQUEST); // Cách 1
+  throw new BadRequestException('Email already exists'); // Cách 2
 }
 ```
 
@@ -54,11 +55,52 @@ Khi đó, lỗi trả về cho client sẽ có dạng:
 
 :::note
 
-- Nếu ta truyền vào một string làm tham số thứ nhất thì theo mặc định NestJS sẽ trả về error response bao gồm 3 trường là **message**, **error**, **statusCode**.
+- Nếu ta truyền vào một string làm tham số thứ nhất thì theo mặc định NestJS sẽ trả về error response bao gồm 3 trường là **message** (có giá trị là tham số thứ nhất ta vừa truyền), **error**, **statusCode**.
 - Nếu ta truyền 1 object vào tham số thứ nhất thì NestJS sẽ trả về error response là object được truyền vào này.
-- Để custom response trả về cho client, hãy xem mục kế tiếp ở bên dưới.
+- Để custom exception response hoàn chỉnh trả về cho client, xem [tại đây](../custom-exception-filter).
 
 :::
+
+## Custom exceptions
+
+- Để tạo một custom exception, ta tạo một class và `extends HttpException`.
+- Ví dụ:
+
+```ts title="login.exception.ts"
+import { HttpException, HttpStatus } from "@nestjs/common";
+
+enum ELoginExceptionErrorType {
+  INVALID_CREDENTIALS = "INVALID_CREDENTIALS",
+  REQUIRED_2FA_OTP = "REQUIRED_2FA_OTP",
+  INVALID_2FA_OTP = "INVALID_2FA_OTP",
+}
+
+export class LoginException extends HttpException {
+  constructor(options: {
+    message: string;
+    errorType: ELoginExceptionErrorType;
+  }) {
+    const { message, errorType } = options;
+    super({ message, errorType }, HttpStatus.BAD_REQUEST);
+  }
+}
+```
+
+- Sau đó, ta có thể throw custom exception này:
+
+```ts title="auth.service.ts"
+@Injectable()
+export class AuthService {
+  constructor() {}
+
+  login = async () => {
+    throw new LoginException({
+      message: "Two factor authenticator code is invalid",
+      errorType: ELoginExceptionErrorType.INVALID_2FA_OTP,
+    });
+  };
+}
+```
 
 ## Exception filters
 

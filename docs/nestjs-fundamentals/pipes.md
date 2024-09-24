@@ -425,8 +425,8 @@ import { IsNotEmpty, IsNumber, IsString } from "class-validator";
 import { Trim } from "src/common/decorators/sanitizer/trim.sanitizer";
 
 enum EHeaderKey {
-  REFRESH_TOKEN = "refresh-token",
-  TWO_FACTOR_AUTH_SECRET_KEY = "two-factor-auth-secret-key",
+  REFRESH_TOKEN = "x-refresh-token",
+  TWO_FACTOR_AUTH_SECRET_KEY = "x-two-factor-auth-secret-key",
 }
 
 export class RefreshTokenHeaderDTO {
@@ -446,7 +446,7 @@ export class RefreshTokenHeaderDTO {
 
 :::note
 
-- Ta phải sử dụng `@Expose()` để có thể biến đổi tên key từ header ta truyền vào và gán vào thuộc tính ta định nghĩa bên trong class DTO.
+- Ta phải sử dụng `@Expose()` để có thể lấy giá trị tương ứng với tên key từ header và gán vào thuộc tính ta định nghĩa bên trong class DTO.
   :::
 
 - Và cuối cùng ta có thể sử dụng `@RequestHeader()` trong controller:

@@ -178,6 +178,11 @@ const roles = this.reflector.getAllAndMerge(Roles, [
 :::info
 
 - Ngoài việc sử dụng **Reflector.createDecorator()** để tạo metadata, ta có thể dùng hàm **SetMetadata()**. Nó cũng có chức năng tương tự.
+- Cú pháp:
+
+```ts
+SetMetadata(metaDataKey: string, metaDataValue: any)
+```
 
 :::
 
@@ -199,8 +204,15 @@ async create(@Body() createCatDto: CreateCatDto) {
 }
 ```
 
-Cuối cùng, ta có thể lấy giá trị của nó ra trong Guard:
+Cuối cùng, ta có thể lấy giá trị thông qua key của nó trong Guard:
 
 ```ts title="roles.guard.ts"
 const roles = this.reflector.get<string[]>("roles", context.getHandler());
 ```
+
+:::tip
+
+- Thông thường, hàm `SetMetadata()` sẽ được sử dụng nhiều hơn vì tính linh hoạt của nó.
+- Nên tạo biến hằng hoặc enum ra 1 file cho **metaDataKey** để quản lý dễ hơn.
+
+:::
