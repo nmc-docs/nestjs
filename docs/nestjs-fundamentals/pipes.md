@@ -421,6 +421,7 @@ export const RequestHeader = createParamDecorator(
 ```ts title="RefreshTokenHeader.dto.ts"
 import { Expose, Type } from "class-transformer";
 import { IsNotEmpty, IsNumber, IsString } from "class-validator";
+import { ApiProperty } from "@nestjs/swagger";
 
 import { Trim } from "src/common/decorators/sanitizer/trim.sanitizer";
 
@@ -430,12 +431,14 @@ enum EHeaderKey {
 }
 
 export class RefreshTokenHeaderDTO {
+  @ApiProperty({ name: EHeaderKey.REFRESH_TOKEN })
   @Expose({ name: EHeaderKey.REFRESH_TOKEN })
   @Trim()
   @IsString()
   @IsNotEmpty()
   refreshToken: string;
 
+  @ApiProperty({ name: EHeaderKey.TWO_FACTOR_AUTH_SECRET_KEY })
   @Expose({ name: EHeaderKey.TWO_FACTOR_AUTH_SECRET_KEY })
   @IsNotEmpty()
   @IsNumber()
@@ -452,10 +455,13 @@ export class RefreshTokenHeaderDTO {
 - Và cuối cùng ta có thể sử dụng `@RequestHeader()` trong controller:
 
 ```ts
+import { Headers } from '@nestjs/common';
+
 import { RequestHeader } from 'src/common/decorators/request-header.decorator';
 
 @Post('refresh-token')
 async refreshToken(
+  @Headers()
   @RequestHeader(
     new ValidationPipe({
       validateCustomDecorators: true, // Remember to add this option
