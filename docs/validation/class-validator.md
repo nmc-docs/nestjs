@@ -133,6 +133,25 @@ sidebar_position: 1
 | **Other decorators**                                   |                                                                                                                                                                                                       |
 | `@Allow()`                                             | Prevent stripping off the property when no other constraint is specified for it.                                                                                                                      |
 
+## Array validation
+
+- Để validate các phần tử trong một array, ta sử dụng `each: true` khi sử dụng decorator, ví dụ:
+
+```ts title="CreateUser.dto.ts"
+import { IsNotEmpty, IsString, IsArray } from "class-validator";
+
+export class CreateUserDTO {
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+
+  @IsString({ each: true })
+  @IsNotEmpty({ each: true })
+  @IsArray()
+  address: string[];
+}
+```
+
 ## Validating nested objects
 
 - Nếu thuộc tính là một object và ta muốn validate từng field trong object đó, ta sử dụng decorator `@ValidateNested()`, ví dụ:
@@ -148,7 +167,7 @@ export class Post {
 
 :::note
 
-- Khi sử dụng decorator `@ValidateNested()` hãy kết hợp với decorator `@Type()` của thư viện class-transformer.
+- Khi sử dụng decorator `@ValidateNested()` hãy kết hợp với decorator [@Type()](./class-transformer#type) của thư viện class-transformer.
 
 :::
 
@@ -382,3 +401,128 @@ export class CreateScheduleDTO {
   endDate: Date;
 }
 ```
+
+### Ví dụ 3
+
+- Ở ví dụ này, ta sẽ tạo custom decorator có sử dụng dependency. Cụ thể, ta sẽ validate liệu một user có tồn tại hay không dựa trên id.
+- Tạo class validator decorator:
+
+```ts title="IsUserExist.validator.ts"
+import { Injectable } from "@nestjs/common";
+import {
+  registerDecorator,
+  ValidationArguments,
+  ValidationOptions,
+  ValidatorConstraint,
+  ValidatorConstraintInterface,
+} from "class-validator";
+
+import { PrismaService } from "src/modules/libs/prisma/prisma.service";
+
+@Injectable()
+@ValidatorConstraint({ name: "IsUserExist", async: true }) // Đặt "async: true" để cho thư viện biết hàm "validate" là bất đồng bộ
+export class IsUserExistConstraint implements ValidatorConstraintInterface {
+  constructor(private readonly prisma: PrismaService) {}
+
+  async validate(value: string, args: ValidationArguments) {
+    const user = await this.prisma.user.findUnique({ where: { id: value } });
+    return !!user;
+  }
+
+  defaultMessage(args: ValidationArguments) {
+    return "User does not exist";
+  }
+}
+
+export function IsUserExist(validationOptions?: ValidationOptions) {
+  return function (object: object, propertyName: string) {
+    registerDecorator({
+      target: object.constructor,
+      propertyName: propertyName,
+      options: validationOptions,
+      constraints: [],
+      validator: IsUserExistConstraint,
+    });
+  };
+}
+```
+
+- Sử dụng custom decorator trong DTO:
+
+```ts title="ChangeUserInformation.dto.ts"
+import { IsNotEmpty, IsUUID } from "class-validator";
+
+import { IsUserExist } from "src/common/decorators/class-validator/IsUserExist.validator";
+
+export class ChangeUserInformationDTO {
+  @IsUserExist()
+  @IsUUID()
+  @IsNotEmpty()
+  userId: string;
+}
+```
+
+- Trong file **main.ts**, ta thêm dòng sau:
+
+```ts title="main.ts"
+import { Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { NestFactory } from "@nestjs/core";
+import { useContainer } from "class-validator";
+import { WinstonModule } from "nest-winston";
+
+import { AppModule } from "./app.module";
+import { winstonLogger } from "src/common/configs/logger.config";
+import { IEnvironmentVariables } from "src/common/types/env.type";
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule, {
+    logger: WinstonModule.createLogger({ instance: winstonLogger }),
+  });
+  const configService = app.get(ConfigService<IEnvironmentVariables>);
+  const nestServerPort = configService.get<number>("NEST_SERVER_PORT")!;
+
+  app.setGlobalPrefix("api/v1");
+  app.enableCors({ origin: "*" });
+  useContainer(app.select(AppModule), { fallbackOnErrors: true }); // Add this line
+
+  await app.listen(nestServerPort);
+  Logger.log(
+    `Server is running on: http://localhost:${nestServerPort}`,
+    bootstrap.name
+  );
+}
+bootstrap();
+```
+
+:::note
+
+- Đừng quên thêm `IsUserExistConstraint` vào mảng các providers ở module ta sử dụng nó:
+
+```ts title="user.module.ts"
+import { Module } from "@nestjs/common";
+
+@Module({
+  controllers: [UserController],
+  providers: [UserService, IsUserExistConstraint],
+})
+export class UserModule {}
+```
+
+:::
+
+:::tip
+
+- Ta nên tạo một module tên `ClassValidatorModule` để cấu hình tất cả các custom class validator làm provider, sau đó chỉ cần import `ClassValidatorModule` vào các module cần sử dụng là được, ví dụ:
+
+```ts title="class-validator.module.ts"
+import { Module } from "@nestjs/common";
+
+@Module({
+  providers: [IsUserExistConstraint, IsTaskExistConstraint],
+  exports: [IsUserExistConstraint, IsTaskExistConstraint],
+})
+export class ClassValidatorModule {}
+```
+
+:::

@@ -47,8 +47,9 @@ export class ExampleService {
 }
 ```
 
-- Các tham số truyền vào `constructor()` phải là các **PROVIDER**.
-- Các thuộc tính khác của class không phải là **PROVIDER** thì khai báo ra ngoài, khi khởi tạo thì thực hiện bên trong hàm `constructor()`
+- Các tham số truyền vào `constructor()` phải là các [**PROVIDER**](./nestjs-fundamentals/providers#định-nghĩa-provider).
+- Vì class **ExampleService** có inject các dependency nên nó cũng phải là một [**PROVIDER**](./nestjs-fundamentals/providers#định-nghĩa-provider) (được đánh dấu bằng `@Injectable()`)
+- Các thuộc tính khác của class không phải là [**PROVIDER**](./nestjs-fundamentals/providers#định-nghĩa-provider) thì khai báo ra ngoài, khi khởi tạo thì thực hiện bên trong hàm `constructor()`
 - Các thuộc tính là hằng số thì khai báo và gán luôn giá trị.
 
 :::
