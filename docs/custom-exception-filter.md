@@ -1,12 +1,12 @@
 ---
-sidebar_position: 5
+sidebar_position: 10
 ---
 
 # Tạo exception filter cho app
 
 - Trước đó, ta đã biết tạo 1 [Catch All Exception Filter](./nestjs-fundamentals/exception-filters#catch-all-exception), giờ ta sẽ tạo nó để xử lý tất cả các exception được throw ra trong app một cách có hiệu quả.
 - Exception filter ta sẽ tạo dưới đây sẽ:
-  - Trả về error cho client gồm 3 trường cố định: **statusCode**, **message**, **path**. và có thể có thêm các trường tùy chỉnh khác.
+  - Trả về error cho client gồm 3 trường cố định: **statusCode**, **message**, **path**, **details** (có thể `null`), và có thể có thêm các trường tùy chỉnh khác.
   - Nếu mã lỗi trả về là 500, thì sẽ trả về cho client có dạng sau, và ở server sẽ log ra chi tiết lỗi đó:
 
 ```json
@@ -30,6 +30,9 @@ export class BaseExceptionResponse {
   message: string;
 
   @Expose()
+  details: any | null;
+
+  @Expose()
   path: string;
 }
 ```
@@ -45,47 +48,86 @@ import {
   HttpStatus,
   Logger,
 } from "@nestjs/common";
-import { plainToInstance } from "class-transformer";
+import { WsException } from "@nestjs/websockets";
 import { Request, Response } from "express";
+import { Socket } from "socket.io";
 
 import { BaseExceptionResponse } from "src/common/dto/BaseExceptionResponse.dto";
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
-  catch(exception: HttpException | Error, host: ArgumentsHost): void {
+  private readonly logger = new Logger(AllExceptionsFilter.name);
+
+  catch(
+    exception: WsException | HttpException | Error,
+    host: ArgumentsHost
+  ): void {
+    const contextType = host.getType();
+
+    if (contextType === "http") {
+      this.handleHttpException(exception, host);
+    } else if (contextType === "ws") {
+      this.handleWsException(exception, host);
+    }
+
+    const isLoggableException =
+      !(exception instanceof WsException) &&
+      !(exception instanceof HttpException);
+
+    if (isLoggableException) {
+      this.logUnhandledException(exception, host);
+    }
+  }
+
+  private handleWsException(
+    exception: WsException | Error,
+    host: ArgumentsHost
+  ) {
+    const socketClient = host.switchToWs().getClient<Socket>();
+    const wsData = host.switchToWs().getData();
+    const pattern = host.switchToWs().getPattern();
+    const wsError = !(exception instanceof WsException)
+      ? "Internal server error"
+      : exception.getError();
+
+    const errorDetails =
+      wsError instanceof Object ? { ...wsError } : { message: wsError };
+    socketClient.emit("ws_exception", {
+      ...errorDetails,
+      id: socketClient.id,
+      pattern,
+      data: wsData,
+    });
+  }
+
+  private handleHttpException(
+    exception: HttpException | Error,
+    host: ArgumentsHost
+  ): void {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
 
-    this.handleResponse(request, response, exception);
-  }
-
-  private handleResponse(
-    request: Request,
-    response: Response,
-    exception: HttpException | Error
-  ): void {
     let statusCode: number = HttpStatus.INTERNAL_SERVER_ERROR;
     let message: string = "Internal server error";
     let responseBody: BaseExceptionResponse = {
       statusCode,
       message,
       path: request.url,
+      details: null,
     };
 
     if (exception instanceof HttpException) {
       statusCode = exception.getStatus();
       if (statusCode !== HttpStatus.INTERNAL_SERVER_ERROR) {
-        const exceptionResponseMessage: string | string[] | undefined = (
+        const exceptionResponseMessage: string | undefined = (
           exception.getResponse() as any
-        )?.message;
-        message = Array.isArray(exceptionResponseMessage)
-          ? exceptionResponseMessage.join(", ")
-          : exceptionResponseMessage || "Unknown error message";
+        ).message;
+        message = exceptionResponseMessage || "Unknown error message";
 
         /* 
-        - Lấy ra các error fields khác mà ta đã thêm vào khi throw exception
-        - Ví dụ: khi ta throw new BadRequestException({ errorType: 'INVALID_CREDENTIALS', message: 'Invalid email' }) thì extraErrorFields = { errorType: 'INVALID_CREDENTIALS', message: 'Invalid email' }
+          - Lấy ra các error fields khác mà ta đã thêm vào khi throw exception
+          - Ví dụ: khi ta throw new BadRequestException({ errorType: 'INVALID_CREDENTIALS', message: 'Invalid email' }) thì extraErrorFields = { errorType: 'INVALID_CREDENTIALS', message: 'Invalid email' }
         */
         const { error, ...extraErrorFields } = exception.getResponse() as any;
 
@@ -99,6 +141,26 @@ export class AllExceptionsFilter implements ExceptionFilter {
     }
 
     response.status(statusCode).json(responseBody);
+  }
+
+  private logUnhandledException(exception: Error, host: ArgumentsHost) {
+    const contextType = host.getType();
+
+    if (contextType === "http") {
+      const httpCtx = host.switchToHttp();
+      const request = httpCtx.getRequest<Request>();
+      this.logger.error(
+        `\n👉 Context type: ${contextType.toUpperCase()}\n👉 Method: ${
+          request.method
+        }\n👉 Path: ${request.url}\n👉 Details: ${exception.stack?.toString()}`
+      );
+    } else if (contextType === "ws") {
+      const wsCtx = host.switchToWs();
+      const pattern = wsCtx.getPattern();
+      this.logger.error(
+        `\n👉 Context type: ${contextType.toUpperCase()}\n👉 Pattern: ${pattern}\n👉 Details: ${exception.stack?.toString()}`
+      );
+    }
   }
 }
 ```
