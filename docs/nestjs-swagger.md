@@ -600,6 +600,82 @@ export class UploadController {
 }
 ```
 
+### `@ApiExtraModels()`
+
+- Trong **NestJS + Swagger**, decorator `@ApiExtraModels()` được sử dụng để **đăng ký các mô hình (model) phụ bổ sung** mà Swagger có thể không tự động phát hiện ra trong các API endpoint. Điều này thường cần thiết khi ta sử dụng các **wrapper class** hoặc **generic types** như `ApiResponse`, `Pagination<T>`, `ResultDto<T>`...
+- 📌 Mục đích chính: Swagger (cụ thể là thư viện `@nestjs/swagger`) **chỉ quét và tạo tài liệu cho các model được tham chiếu trực tiếp** trong các decorator như `@ApiResponse()`, `@ApiBody()`, v.v. Nếu ta dùng các kiểu generic hoặc lớp không được tham chiếu trực tiếp, ta phải dùng `@ApiExtraModels()` để đảm bảo Swagger biết đến và sinh schema cho chúng.
+- 📘 Cú pháp:
+
+```ts
+import { ApiExtraModels } from "@nestjs/swagger";
+
+@ApiExtraModels(ModelA, ModelB, PaginationDto)
+@Controller("example")
+export class ExampleController {
+  // ...
+}
+```
+
+- 📍 Ví dụ cụ thể:
+
+* Giả sử ta có một class kết quả chung như sau:
+
+```ts
+export class ResultDto<T> {
+  success: boolean;
+  data: T;
+}
+```
+
+- Và ta có một `UserDto`:
+
+```ts
+export class UserDto {
+  id: number;
+  name: string;
+}
+```
+
+- Khi ta muốn trả về `ResultDto<UserDto>`, Swagger **không tự biết phải sinh schema của UserDto nằm trong ResultDto**, nên ta cần:
+
+```ts
+import { ApiExtraModels, ApiOkResponse, getSchemaPath } from "@nestjs/swagger";
+
+@ApiExtraModels(ResultDto, UserDto)
+@Controller("users")
+export class UsersController {
+  @Get()
+  @ApiOkResponse({
+    description: "Get user response",
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(ResultDto) },
+        {
+          properties: {
+            data: { $ref: getSchemaPath(UserDto) },
+          },
+        },
+      ],
+    },
+  })
+  getUser() {
+    return {
+      success: true,
+      data: { id: 1, name: "John" },
+    };
+  }
+}
+```
+
+:::tip
+✅ Khi nào nên dùng `@ApiExtraModels`?
+
+- Khi dùng các lớp wrapper chung như: `Pagination<T>`, `ResultDto<T>`, `ResponseWrapper<T>`…
+- Khi Swagger không tự tạo được schema cho class ta dùng trong response hoặc body.
+- Khi dùng `oneOf`, `allOf`, `anyOf` trong schema và có các model con bên trong.
+
+:::
+
 :::tip
 
 - Như đã nói ở trên, do ta vừa cấu hình NestJS Swagger Plugin nên nó sẽ tự động đọc object của request như **body**, **param**, **query**, **header** và response ở các [request object decorator](./nestjs-fundamentals/controllers#request-object) do NestJS cung cấp, ở các file .dto.ts mà ta định nghĩa các DTO. Vì vậy, ta không cần sử dụng những decorator như `@ApiBody(), @ApiQuery(), @ApiHeader(), @ApiProperty()`. Nhưng nếu ta cần cấu hình thêm như description, enum,... ta vẫn có thể sử dụng các decorator đó để định nghĩa thêm.
