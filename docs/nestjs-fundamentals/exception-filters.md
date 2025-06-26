@@ -43,30 +43,12 @@ async register() {
 }
 ```
 
-Khi đó, lỗi trả về cho client sẽ có dạng:
-
-```json
-{
-  "message": "Something bad happened",
-  "error": "Bad request",
-  "statusCode": 400
-}
-```
-
-:::note
-
-- Nếu ta truyền vào một string làm tham số thứ nhất thì theo mặc định NestJS sẽ trả về error response bao gồm 3 trường là **message** (có giá trị là tham số thứ nhất ta vừa truyền), **error**, **statusCode**.
-- Nếu ta truyền 1 object vào tham số thứ nhất thì NestJS sẽ trả về error response là object được truyền vào này.
-- Để custom exception response hoàn chỉnh trả về cho client, xem [tại đây](../custom-exception-filter).
-
-:::
-
 ## Custom exceptions
 
 - Để tạo một custom exception, ta tạo một class và `extends HttpException`.
 - Ví dụ:
 
-```ts title="login.exception.ts"
+```ts
 import { HttpException, HttpStatus } from "@nestjs/common";
 
 enum ELoginExceptionErrorType {
@@ -88,7 +70,7 @@ export class LoginException extends HttpException {
 
 - Sau đó, ta có thể throw custom exception này:
 
-```ts title="auth.service.ts"
+```ts
 @Injectable()
 export class AuthService {
   constructor() {}
@@ -120,7 +102,7 @@ export class AuthService {
 
 - Trong ví dụ sau, ta tạo 1 custom exception filter để xử lý những **HttpException** và trả về error response cho client bao gồm 3 trường là: **statusCode**, **timestamp** và **path**.
 
-```ts title="http-exception.filter.ts"
+```ts
 import {
   ExceptionFilter,
   Catch,
@@ -151,7 +133,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
 - Trong ví dụ trên, tất cả các exception là **HttpException** hoặc được kế thừa từ **HttpExeption** đều được xử lý bởi **HttpExceptionFilter**. Nếu ta muốn tạo exception filter để chỉ xử lý một exception cụ thể nào đó, hãy truyền exception đó vào **@Catch()**.
 - Ví dụ exception filter dưới đây chỉ xử lý cho **UnauthorizedException**:
 
-```ts title="unauthorized-exception.filter.ts"
+```ts
 import {
   ExceptionFilter,
   Catch,
@@ -175,7 +157,7 @@ export class UnauthorizedExceptionFilter implements ExceptionFilter {
 - Trong nhiều trường hợp, có những exception được throw ra không thuộc hoặc không được kế thừa từ **HttpException** của NestJS, ví dụ như exception được throw ra từ **Error**. Do đó, ta phải bắt tất cả các exception này, nếu không, ứng dụng sẽ bị crash.
 - Để bắt tất cả các exception như vậy, ta không truyền gì vào **@Catch()**
 
-```ts title="all-exceptions.filter.ts"
+```ts
 import {
   ArgumentsHost,
   Catch,
@@ -199,7 +181,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
 ### Cấp độ Global
 
-```ts title="main.ts"
+```ts
 import { NestFactory } from "@nestjs/core";
 
 import { AppModule } from "./app.module";
@@ -215,7 +197,7 @@ bootstrap();
 
 - Hoặc cấu hình global trong AppModule:
 
-```ts title="app.module.ts"
+```ts
 @Module({
   controllers: [],
   providers: [
@@ -230,7 +212,7 @@ export class AppModule {}
 
 ### Cấp độ controller
 
-```ts title="customers.controller.ts"
+```ts
 import { Body, Controller, Get, Post, UseFilters } from "@nestjs/common";
 
 import { AllExceptionsFilter } from "src/common/filters/request-validation-exception.filter";
@@ -255,7 +237,7 @@ export class CustomersController {
 
 ### Cấp độ method
 
-```ts title="customers.controller.ts"
+```ts
 import { Body, Controller, Get, Post, UseFilters } from "@nestjs/common";
 
 import { AllExceptionsFilter } from "src/common/filters/request-validation-exception.filter";
@@ -276,4 +258,45 @@ export class CustomersController {
     return createdCustomer;
   }
 }
+```
+
+## Sự khác biệt response trả về khi `throw HttpException` và lớp con
+
+- Truyền string:
+
+```ts
+throw new HttpException("Email already exists", HttpStatus.BAD_REQUEST);
+/* Response trả về có kiểu string: "Email already exists" */
+
+throw new BadRequestException("Email already exists");
+/* Response trả về có dạng object:
+{
+  "statusCode": 400,
+  "message": "Email already exists",
+  "error": "Bad Request"
+}
+*/
+```
+
+- Truyền object:
+
+```ts
+throw new HttpException(
+  {
+    message: "Email already exists",
+    errorType: "BadRequestException",
+  },
+  HttpStatus.BAD_REQUEST
+);
+throw new BadRequestException({
+  message: "Email already exists",
+  errorType: "BadRequestException",
+});
+
+/* Response trả về ở cả 2 cách có dạng object:
+{
+  "message": "Email already exists",
+  "errorType": "BadRequestException",
+}
+*/
 ```
