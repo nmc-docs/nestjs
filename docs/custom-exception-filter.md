@@ -78,12 +78,19 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
     statusCode = exception.getStatus();
     if (statusCode !== HttpStatus.INTERNAL_SERVER_ERROR) {
-      const exceptionResponseMessage: string | undefined = (
-        exception.getResponse() as any
-      ).message;
-      message = exceptionResponseMessage || "Unknown error message";
+      const exceptionResponse = exception.getResponse();
+      const exceptionMessage: string | undefined =
+        typeof exceptionResponse === "string"
+          ? exceptionResponse
+          : (exceptionResponse as any).message;
 
-      const { error, ...extraErrorFields } = exception.getResponse() as any;
+      message = exceptionMessage || "Unknown error message";
+
+      let extraErrorFields: Record<string, any> = {};
+      if (typeof exceptionResponse === "object" && exceptionResponse !== null) {
+        extraErrorFields = { ...exceptionResponse };
+        delete extraErrorFields.error;
+      }
 
       responseBody = {
         ...responseBody,
@@ -210,8 +217,11 @@ export class AppModule {}
 :::caution[Chú ý]
 
 - Lưu ý rằng phải đặt `HttpExceptionFilter`, `WsExceptionFilter` sau `AllExceptionsFilter`, điều này là rất quan trọng vì:
+
   - NestJS sẽ duyệt qua từng filter theo thứ tự đăng ký (từ cuối lên đầu), và nếu một filter xử lý được lỗi (`catch` xong không throw tiếp), thì NestJS **không chuyển lỗi cho filter tiếp theo nữa**.
   - Do đó, **filter nào khai báo sau sẽ có cơ hội xử lý lỗi trước**.
+
+- Đối với **WebSocket**, ta phải chỉ định lại `@UseFilters(AllExceptionsFilter, WsExceptionFilter)` ở đầu gateway thì exception mới được xử lý (chỉ định với `provide: APP_FILTER` sẽ chỉ hoạt động đối với HTTP). Xem chi tiết [tại đây](./websockets/websocket-pipe-exfilter-interceptor-guard#ví-dụ)
 
 :::
 

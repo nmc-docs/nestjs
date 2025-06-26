@@ -88,3 +88,9 @@ import { LoggingInterceptor } from "src/common/interceptors/logging.interceptor"
 })
 export class AppModule {}
 ```
+
+:::caution[Lưu ý]
+
+- Đối với **WebSocket**, ta phải chỉ định lại `@UseInterceptors(LoggingInterceptor)` ở đầu gateway thì logging mới hoạt động (chỉ định với `provide: APP_INTERCEPTOR` sẽ chỉ hoạt động đối với HTTP). Xem chi tiết [tại đây](./websockets/websocket-pipe-exfilter-interceptor-guard#ví-dụ)
+
+:::
