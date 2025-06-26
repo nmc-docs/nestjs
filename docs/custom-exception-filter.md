@@ -4,18 +4,26 @@ sidebar_position: 10
 
 # Tạo exception filter cho app
 
-- Trước đó, ta đã biết tạo 1 [Catch All Exception Filter](./nestjs-fundamentals/exception-filters#catch-all-exception), giờ ta sẽ tạo nó để xử lý tất cả các exception được throw ra trong app một cách có hiệu quả.
-- Exception filter ta sẽ tạo dưới đây sẽ:
-  - Trả về error cho client gồm 3 trường cố định: **statusCode**, **message**, **path**, **details** (có thể `null`), và có thể có thêm các trường tùy chỉnh khác.
-  - Nếu mã lỗi trả về là 500, thì sẽ trả về cho client có dạng sau, và ở server sẽ log ra chi tiết lỗi đó:
+:::info[Mục tiêu]
 
-```json
-{
-  "statusCode": 500,
-  "message": "Internal server error",
-  "path": "/api/v1/auth/upload"
-}
-```
+- Trong bài này, ta sẽ tạo 3 loại exception filter:
+  - **Http Exception Filter** (Xử lý lỗi HTTP)
+  - **Websocket Exception Filter** (Xử lý lỗi Websocket)
+  - **Catch all Exception Filter** (Xử lý các unhandled errors)
+- Dữ liệu trả về lỗi của HTTP bao gồm các trường chính:
+  - `statusCode`: Mã lỗi HTTP
+  - `message`: Thông báo lỗi
+  - `errors`: Chi tiết lỗi (có thể có hoặc không)
+  - `path`: Endpoint của API
+- Dữ liệu trả về lỗi của Websocket bao gồm các trường chính:
+
+  - `clientId`: ID của client kết nối tới server socket
+  - `pattern`: Subscribe message
+  - `payload`: Dữ liệu client gửi đến
+  - `message`: Thông báo lỗi
+  - `errors`: Chi tiết lỗi (có thể có hoặc không)
+
+:::
 
 - Đầu tiên, tạo **BaseExceptionResponse.dto.ts**:
 
@@ -30,25 +38,108 @@ export class BaseExceptionResponse {
   message: string;
 
   @Expose()
-  details: any | null;
+  errors: any | null;
 
   @Expose()
   path: string;
 }
 ```
 
-- Tạo **all-exception-filter.ts**:
+- Tạo **http-exception-filter.ts**:
 
-```ts title="all-exception-filter.ts"
+```ts title="http-exception-filter.ts"
 import {
   ArgumentsHost,
   Catch,
   ExceptionFilter,
   HttpException,
   HttpStatus,
-  Logger,
 } from "@nestjs/common";
+import { Request, Response } from "express";
+
+import { BaseExceptionResponse } from "src/common/dto/BaseExceptionResponse.dto";
+
+@Catch(HttpException)
+export class HttpExceptionFilter implements ExceptionFilter {
+  catch(exception: HttpException, host: ArgumentsHost) {
+    const ctx = host.switchToHttp();
+    const response = ctx.getResponse<Response>();
+    const request = ctx.getRequest<Request>();
+
+    let statusCode: number = HttpStatus.INTERNAL_SERVER_ERROR;
+    let message: string =
+      "An unexpected error occurred. Please contact admin to resolve this issue.";
+    let responseBody: BaseExceptionResponse = {
+      statusCode,
+      message,
+      path: request.url,
+      errors: null,
+    };
+
+    statusCode = exception.getStatus();
+    if (statusCode !== HttpStatus.INTERNAL_SERVER_ERROR) {
+      const exceptionResponseMessage: string | undefined = (
+        exception.getResponse() as any
+      ).message;
+      message = exceptionResponseMessage || "Unknown error message";
+
+      const { error, ...extraErrorFields } = exception.getResponse() as any;
+
+      responseBody = {
+        ...responseBody,
+        ...extraErrorFields,
+        message,
+        statusCode,
+      };
+    }
+
+    response.status(statusCode).json(responseBody);
+  }
+}
+```
+
+- Tạo **ws-exception-filter.ts**:
+
+```ts title="ws-exception-filter.ts"
+import { ArgumentsHost, Catch, ExceptionFilter } from "@nestjs/common";
 import { WsException } from "@nestjs/websockets";
+import { Socket } from "socket.io";
+
+@Catch(WsException)
+export class WsExceptionFilter implements ExceptionFilter {
+  catch(exception: WsException, host: ArgumentsHost) {
+    const wsContext = host.switchToWs();
+    const socketClient = wsContext.getClient<Socket>();
+    const wsData = wsContext.getData();
+    const pattern = wsContext.getPattern();
+    const wsError = exception.getError();
+
+    const errorMessage =
+      (wsError instanceof Object ? (wsError as any)?.message : wsError) ||
+      "Unknown error message";
+
+    const errorResponse = {
+      ...(wsError instanceof Object ? wsError : {}),
+      clientId: socketClient.id,
+      pattern,
+      payload: wsData,
+      message: errorMessage,
+    };
+
+    socketClient.emit("ws_exception", errorResponse);
+  }
+}
+```
+
+- Tạo **all-exception.filter.ts**:
+
+```ts title="all-exception.filter.ts"
+import {
+  ArgumentsHost,
+  Catch,
+  ExceptionFilter,
+  HttpStatus,
+} from "@nestjs/common";
 import { Request, Response } from "express";
 import { Socket } from "socket.io";
 
@@ -56,12 +147,7 @@ import { BaseExceptionResponse } from "src/common/dto/BaseExceptionResponse.dto"
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
-  private readonly logger = new Logger(AllExceptionsFilter.name);
-
-  catch(
-    exception: WsException | HttpException | Error,
-    host: ArgumentsHost
-  ): void {
+  catch(exception: Error, host: ArgumentsHost): void {
     const contextType = host.getType();
 
     if (contextType === "http") {
@@ -69,98 +155,39 @@ export class AllExceptionsFilter implements ExceptionFilter {
     } else if (contextType === "ws") {
       this.handleWsException(exception, host);
     }
-
-    const isLoggableException =
-      !(exception instanceof WsException) &&
-      !(exception instanceof HttpException);
-
-    if (isLoggableException) {
-      this.logUnhandledException(exception, host);
-    }
   }
 
-  private handleWsException(
-    exception: WsException | Error,
-    host: ArgumentsHost
-  ) {
+  private handleWsException(_exception: Error, host: ArgumentsHost) {
     const socketClient = host.switchToWs().getClient<Socket>();
     const wsData = host.switchToWs().getData();
     const pattern = host.switchToWs().getPattern();
-    const wsError = !(exception instanceof WsException)
-      ? "Internal server error"
-      : exception.getError();
 
-    const errorDetails =
-      wsError instanceof Object ? { ...wsError } : { message: wsError };
-    socketClient.emit("ws_exception", {
-      ...errorDetails,
-      id: socketClient.id,
+    const responseBody = {
+      clientId: socketClient.id,
       pattern,
-      data: wsData,
-    });
+      payload: wsData,
+      message:
+        "An unexpected error occurred. Please contact admin to resolve this issue.",
+      errors: "Internal server error",
+    };
+
+    socketClient.emit("ws_exception", responseBody);
   }
 
-  private handleHttpException(
-    exception: HttpException | Error,
-    host: ArgumentsHost
-  ): void {
+  private handleHttpException(_exception: Error, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
 
-    let statusCode: number = HttpStatus.INTERNAL_SERVER_ERROR;
-    let message: string = "Internal server error";
-    let responseBody: BaseExceptionResponse = {
-      statusCode,
-      message,
+    const responseBody: BaseExceptionResponse = {
+      statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+      message:
+        "An unexpected error occurred. Please contact admin to resolve this issue.",
       path: request.url,
-      details: null,
+      errors: "Internal server error",
     };
 
-    if (exception instanceof HttpException) {
-      statusCode = exception.getStatus();
-      if (statusCode !== HttpStatus.INTERNAL_SERVER_ERROR) {
-        const exceptionResponseMessage: string | undefined = (
-          exception.getResponse() as any
-        ).message;
-        message = exceptionResponseMessage || "Unknown error message";
-
-        /* 
-          - Lấy ra các error fields khác mà ta đã thêm vào khi throw exception
-          - Ví dụ: khi ta throw new BadRequestException({ errorType: 'INVALID_CREDENTIALS', message: 'Invalid email' }) thì extraErrorFields = { errorType: 'INVALID_CREDENTIALS', message: 'Invalid email' }
-        */
-        const { error, ...extraErrorFields } = exception.getResponse() as any;
-
-        responseBody = {
-          ...responseBody,
-          ...extraErrorFields,
-          message,
-          statusCode,
-        };
-      }
-    }
-
-    response.status(statusCode).json(responseBody);
-  }
-
-  private logUnhandledException(exception: Error, host: ArgumentsHost) {
-    const contextType = host.getType();
-
-    if (contextType === "http") {
-      const httpCtx = host.switchToHttp();
-      const request = httpCtx.getRequest<Request>();
-      this.logger.error(
-        `\n👉 Context type: ${contextType.toUpperCase()}\n👉 Method: ${
-          request.method
-        }\n👉 Path: ${request.url}\n👉 Details: ${exception.stack?.toString()}`
-      );
-    } else if (contextType === "ws") {
-      const wsCtx = host.switchToWs();
-      const pattern = wsCtx.getPattern();
-      this.logger.error(
-        `\n👉 Context type: ${contextType.toUpperCase()}\n👉 Pattern: ${pattern}\n👉 Details: ${exception.stack?.toString()}`
-      );
-    }
+    response.status(HttpStatus.INTERNAL_SERVER_ERROR).json(responseBody);
   }
 }
 ```
@@ -171,10 +198,29 @@ export class AllExceptionsFilter implements ExceptionFilter {
 import { APP_FILTER } from "@nestjs/core";
 
 @Module({
-  providers: [{ provide: APP_FILTER, useClass: AllExceptionsFilter }],
+  providers: [
+    { provide: APP_FILTER, useClass: AllExceptionsFilter },
+    { provide: APP_FILTER, useClass: HttpExceptionFilter },
+    { provide: APP_FILTER, useClass: WsExceptionFilter },
+  ],
 })
 export class AppModule {}
 ```
+
+:::caution[Chú ý]
+
+- Lưu ý rằng phải đặt `HttpExceptionFilter`, `WsExceptionFilter` sau `AllExceptionsFilter`, điều này là rất quan trọng vì:
+  - NestJS sẽ duyệt qua từng filter theo thứ tự đăng ký (từ cuối lên đầu), và nếu một filter xử lý được lỗi (`catch` xong không throw tiếp), thì NestJS **không chuyển lỗi cho filter tiếp theo nữa**.
+  - Do đó, **filter nào khai báo sau sẽ có cơ hội xử lý lỗi trước**.
+
+:::
+
+:::tip[✅ Gợi ý sử dụng]
+
+- Đặt các **filter chuyên biệt hơn** ở **sau cùng** (được ưu tiên xử lý trước).
+- Đặt các **filter tổng quát (catch-all)** như `AllExceptionsFilter` ở **trước** (vì nó sẽ nằm dưới cùng, được gọi cuối cùng như một "lưới an toàn").
+
+:::
 
 :::caution
 
