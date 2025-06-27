@@ -26,7 +26,6 @@ sidebar_position: 3
   providers: [
     { provide: APP_FILTER, useClass: AllExceptionsFilter },
     { provide: APP_FILTER, useClass: HttpExceptionFilter },
-    { provide: APP_FILTER, useClass: WsExceptionFilter },
     { provide: APP_PIPE, useClass: AppValidationPipe },
     { provide: APP_GUARD, useClass: AuthGuard },
     { provide: APP_INTERCEPTOR, useClass: AppClassSerializerInterceptor },

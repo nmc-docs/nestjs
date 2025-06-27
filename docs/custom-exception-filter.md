@@ -208,7 +208,6 @@ import { APP_FILTER } from "@nestjs/core";
   providers: [
     { provide: APP_FILTER, useClass: AllExceptionsFilter },
     { provide: APP_FILTER, useClass: HttpExceptionFilter },
-    { provide: APP_FILTER, useClass: WsExceptionFilter },
   ],
 })
 export class AppModule {}
