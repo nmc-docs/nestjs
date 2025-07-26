@@ -13,6 +13,14 @@ sidebar_position: 99
   Dependency Injection: `@Injectable()` giúp NestJS biết rằng lớp này có thể được tiêm vào các lớp khác. Điều này giúp quản lý sự phụ thuộc giữa các lớp dễ dàng hơn và thúc đẩy việc sử dụng lại mã nguồn.
   Quản lý lifecycle: NestJS quản lý vòng đời của các provider và đảm bảo rằng chúng được khởi tạo và hủy đúng cách.
 
+- Khi nào **KHÔNG CẦN** sử dụng `@Injectable()`:
+  | Mục đích của class? | Có cần `@Injectable()` không? |
+  | ------------------------------------------ | ----------------------------- |
+  | Inject vào class khác qua constructor | ✅ Có |
+  | Dùng như service, guard, pipe, interceptor, strategy (passport), custom provider | ✅ Có |
+  | Gọi thủ công bằng `new` | ❌ Không cần |
+  | Là DTO, helper, enum, constant | ❌ Không cần |
+
 :::
 
 ## 2
