@@ -189,6 +189,26 @@ export class Post {
 
 - Trong ví dụ trên, chỉ khi nào field **otherProperty** có giá trị là "value" thì nó mới validate field **example**
 
+```ts
+export class ExampleDTO {
+  @IsOptional()
+  @ValidateIf((o) => o.content)
+  @IsString()
+  @MinLength(5)
+  @MaxLength(100)
+  @IsUUID("4")
+  content?: string;
+}
+```
+
+- Trong ví dụ trên, trường `content` có thể có giá trị hoặc không, nhưng một khi đã có giá trị thì nó sẽ validate.
+
+:::tip
+
+- Decorator `@ValidateIf()` thường xuyên đi cùng với `@IsOptional()` để áp dụng validate 1 trường optional
+
+:::
+
 ## Inheriting Validation decorators
 
 - Class validator cho phép ta validate dựa trên kế thừa, ví dụ:
